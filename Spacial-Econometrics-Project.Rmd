@@ -8,26 +8,141 @@ output:
     downcute_theme: "default"
 ---
 
-
 ```{r setup, include=FALSE}
 ## Global options
 knitr::opts_chunk$set(cache = TRUE)
 ```
 
-spatial
 
-Description 
+# *Spatial Trends in Property Crimes: A Focus on pre and post pandemic theft offenses across Poland's voivodeships*
 
-Crime ascertained
-Crime ascertained is a crime classified as a felony or misdemeanor prosecuted by public accusation, including fiscal offenses, subject to preparatory proceedings concluded with confirmation of the occurrence of the prohibited act.
+## INTRODUCTION
 
-Due to the change in data collection methods in 2013, criminal acts committed by minors are also included in ascertained crimes, for which the family court issued a decision in juvenile proceedings confirming the commission of a criminal act by a minor that constitutes a crime prosecuted by public accusation. However, from 1999 to 2012, the prohibited act committed by a minor and the minor who committed it were registered at the conclusion of the preparatory proceedings and the transfer of materials to the family court, regardless of the decision in the case. In 2013, criminal acts and minors were potentially registered only after receiving feedback from the court on the decision-making process.
+The study aims to analyze spatial trends in property crimes, focusing on theft offenses across Poland's voivodeships. Further examination explores how socio-economic factors---like unemployment, poverty, salary, and population density --- affect crime rates, considering geographic contexts. The study compares data from 2018 and 2021 to assess whether the pandemic influenced temporal changes in the criminality.
 
-Since 2014, the police do not present information on criminal acts committed by minors.
+## I. DATA DESCRIPTION
 
-Crime detected
-Crime detected refers to ascertained crimes in which at least one suspect was identified in concluded preparatory proceedings or a minor who, according to the decision of the family court, committed a criminal act in 2013. Criminal acts committed by minors detected from 1999 to 2012 were presented at the conclusion of the preparatory proceedings and the transfer of materials to the family court, regardless of the decision in the case.
-Crimes committed jointly and in agreement between an adult and a minor are only indicated once.
+The database comprises data on the number of ascertained and detected crimes in 2018 and 2021, across Poland's voivodeships.
 
-o
+**Crime ascertained** is a crime concluded with confirmation of the occurrence of the prohibited act.
 
+**Crime detected** refers to ascertained crimes in which at least one suspect was identified in concluded preparatory proceedings or a minor who, according to the decision of the family court, committed a criminal act.
+
+The database contain only the crimes committed by an adult.
+
+[Note:]{.underline} Polish law indicates that theft with a value not exceeding 500 PLN is considered a misdemeanor, not a crime. Reporting such theft will not be considered or processed, so there is no point in reporting them. Such a situation causes a disturbance between the actual amount of thefts and the recorded ones, since people has no incentive to report a theft under 500 PLN. This aspect was taken into consideration during the examination.
+
+## II. DATA VISUALIZATION
+
+### CRIME ASCERTAINED 
+
+### CRIME DETECTED
+
+On the map (Figure 1), the spatial variability of voivodeships in terms of the intensity of total ascertained crimes in 2014 is depicted.
+
+```{r}
+install.packages(sf)
+install.packages(rgugik)
+install.packages(bdl)
+install.packages(elevatr)
+install.packages(terra)
+
+install.packages("ggplot2")
+install.packages("tidyverse")
+
+```
+
+```{r}
+Sys.setenv("PROJ_NETWORK"="ON")
+library(rgugik)
+library(sf)
+library(bdl)
+```
+
+```{r}
+crimes_2018 <- subset(crimes, Rok == 2018)
+crimes_2021 <- subset(crimes, Rok == 2021)
+```
+
+
+```{r}
+#API --> for voivodeships (just a database)
+BDL_key <- Sys.getenv("BDL_key_RSB")
+options(bdl.api_private_key=BDL_key)
+(levs <- get_levels(lang="en"))
+levs |> as.data.frame() |>
+ subset(name=="Poziom Województw", select=id, drop=TRUE) -> wlev 
+(units_lev <- get_units(level=wlev, lang="en"))
+
+```
+
+```{r}
+#if we doint find data - here they are, but we have already uploaded
+
+get_subjects(lang="en")
+get_subjects("K3", lang="en")
+get_subjects("G7", lang="en")
+#choosing population by density and indicators
+(pop_persons <- get_variables("P2425", lang="en"))
+```
+
+
+```{r}
+#data visualization
+library(elevatr)
+library(terra)
+```
+
+
+```{r}
+maule_sf |>  get_elev_raster(z = 7,
+ clip = "locations", neg_to_na = TRUE) |> 
+ rast() -> maule_elev
+```
+
+```{r}
+plot(maule_elev, col=rev(hcl.colors(50, "Dark Mint")))
+plot(st_geometry(maule_sf), add=TRUE)
+text(st_coordinates(st_centroid(st_geometry(maule_sf))),
+ label=maule_sf$codigo_comuna)
+```
+
+```{r}
+library(mapview)
+mapview(pom5, zcol="density")
+
+#nie działa, co zrobić, żeby na tej mapce pojawiły się województwa??
+```
+
+
+
+```{r}
+library(ggplot2)
+library(tidyverse)
+
+```
+
+
+
+```{r}
+ggplot(mpg) +
+  geom_point(aes(x = displ, y = Jednostka podziału administracyjnego, size = Przestępstwa stwierdzone), color = "blue")
+```
+
+
+
+### POPULATION DENSITY 
+
+It is assumed that the number of crimes committed is directly proportional to the population density of cities, meaning we expect a greater number of thefts in larger urban areas.
+
+### UNEMPLOYMENT RATE
+
+We assume that there is direct proportional relationship between unemployment rate and crimes of theft (the higher rate of unemployment, the higher amount of crimes of theft),
+
+### POVERTY RATE
+
+A direct proportional relationship between poverty rate and crimes of theft is assumed (the higher rate of poverty, the higher amount of crimes of theft)
+
+### AVERAGE GROSS MONTHLY SALARY 
+
+An inverse relationship between average gross monthly salary and crimes of theft is assumed (the higher amount of average gross monthly salary, the lower amount of crimes of theft).
