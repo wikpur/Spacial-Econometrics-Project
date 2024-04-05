@@ -14,3 +14,4 @@ output:
 knitr::opts_chunk$set(cache = TRUE)
 ```
 
+spatial
