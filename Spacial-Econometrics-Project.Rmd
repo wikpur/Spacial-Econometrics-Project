@@ -15,3 +15,19 @@ knitr::opts_chunk$set(cache = TRUE)
 ```
 
 spatial
+
+Description 
+
+Crime ascertained
+Crime ascertained is a crime classified as a felony or misdemeanor prosecuted by public accusation, including fiscal offenses, subject to preparatory proceedings concluded with confirmation of the occurrence of the prohibited act.
+
+Due to the change in data collection methods in 2013, criminal acts committed by minors are also included in ascertained crimes, for which the family court issued a decision in juvenile proceedings confirming the commission of a criminal act by a minor that constitutes a crime prosecuted by public accusation. However, from 1999 to 2012, the prohibited act committed by a minor and the minor who committed it were registered at the conclusion of the preparatory proceedings and the transfer of materials to the family court, regardless of the decision in the case. In 2013, criminal acts and minors were potentially registered only after receiving feedback from the court on the decision-making process.
+
+Since 2014, the police do not present information on criminal acts committed by minors.
+
+Crime detected
+Crime detected refers to ascertained crimes in which at least one suspect was identified in concluded preparatory proceedings or a minor who, according to the decision of the family court, committed a criminal act in 2013. Criminal acts committed by minors detected from 1999 to 2012 were presented at the conclusion of the preparatory proceedings and the transfer of materials to the family court, regardless of the decision in the case.
+Crimes committed jointly and in agreement between an adult and a minor are only indicated once.
+
+o
+
