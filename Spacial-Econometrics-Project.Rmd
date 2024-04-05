@@ -14,3 +14,7 @@ output:
 knitr::opts_chunk$set(cache = TRUE)
 ```
 
+<<<<<<< HEAD
+=======
+spatial
+>>>>>>> 13105e042abe73c60ada981fab1a851c3c4da1fc
