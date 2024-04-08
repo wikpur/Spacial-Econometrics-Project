@@ -232,5 +232,5 @@ mapsf::mf_map(pom4, var="Unemployment.x", type="choro", breaks="geom",
 fn <- paste0(io_dir, "/pom4.gpkg")
 if (file.exists(fn)) tull <- file.remove(fn)
 try(st_write(pom4, fn))
-```
+``` 
 
