@@ -50,18 +50,6 @@ library(sf)
 library(bdl)
 ```
 
-### POPULATION DENSITY 
-
-It is assumed that the number of crimes committed is directly proportional to the population density of cities, meaning we expect a greater number of thefts in larger urban areas.
-
-### POVERTY RATE
-
-A direct proportional relationship between social services users and crimes against property is assumed (the higher rate of social services users, the higher amount of crimes against property).
-
-### AVERAGE GROSS MONTHLY SALARY 
-
-An inverse relationship between average gross monthly salary and crimes against property is assumed (the higher amount of average gross monthly salary, the lower amount of crimes against property).
-
 ### UNEMPLOYMENT RATE
 
 We assume that there is direct proportional relationship between unemployment rate and crimes against propertyt (the higher rate of unemployment, the higher amount of crimes against property).
@@ -100,14 +88,11 @@ names(unemp)
 pom1 |> merge(unemp, by.x = "TERYT",
  by.y = "Kod") -> pom2
 pom2
-pom2 |> merge(unemp, by.x = "NAME",
- by.y = "County") -> pom3
-pom3
 ```
 
 ```{r}
 library(mapview)
-mapview(pom3, zcol="Unemployment.x")
+mapview(pom2, zcol="Unemployment")
 ```
 
 ```{r}
@@ -116,38 +101,38 @@ library(giscoR)
 pom_gisco <- gisco_get_nuts(year="2021", resolution="01",
  spatialtype="RG", nuts_id="PL63")
 pom_gisco_tm <- st_transform(pom_gisco, "EPSG:2180")
-pom4 <- st_intersection(pom3, pom_gisco_tm)
+pom3 <- st_intersection(pom2, pom_gisco_tm)
 ```
 
 ```{r}
-pom3 |> st_geometry_type() |> table() -> tab5; tab5[tab5>0]
-```
-
-
-```{r}
-pom4 |> st_geometry_type() |> table() -> tab6; tab6[tab6>0]
+pom2 |> st_geometry_type() |> table() -> tab5; tab5[tab5>0]
 ```
 
 
 ```{r}
-pom4 |> st_cast("MULTIPOLYGON") -> pom4
+pom3 |> st_geometry_type() |> table() -> tab6; tab6[tab6>0]
+```
+
+
+```{r}
+pom3 |> st_cast("MULTIPOLYGON") -> pom3
 ```
 
 ```{r}
-mapview(pom4, zcol="Unemployment.x")
+mapview(pom3, zcol="Unemployment")
 ```
 
 ```{r}
-plot(density(pom4$Unemployment.x))
+plot(density(pom3$Unemployment))
 ```
 
 ```{r}
 install.packages("mapsf")
 library(mapsf)
-mapsf::mf_map(pom4, var="Unemployment.x", type="choro", breaks="geom",
+mapsf::mf_map(pom3, var="Unemployment", type="choro", breaks="geom",
  nbreaks=7)
 ```
-##III. 
+##III. NOT WORKING!!!!
 
 ```{r}
 fn <- paste0(io_dir, "/pom4.gpkg")
@@ -155,3 +140,89 @@ if (file.exists(fn)) tull <- file.remove(fn)
 try(st_write(pom4, fn))
 ``` 
 
+
+### POPULATION DENSITY 
+
+It is assumed that the number of crimes committed is directly proportional to the population density of cities, meaning we expect a greater number of thefts in larger urban areas.
+
+### SOCIAL SERVICES USERS
+
+A direct proportional relationship between social services users and crimes against property is assumed (the higher rate of social services users, the higher amount of crimes against property).
+
+```{r}
+Sys.setenv("PROJ_NETWORK"="ON")
+library(rgugik)
+library(sf)
+substring(county_names$TERYT, 1, 2) -> vpom4
+county_names |> subset(subset = vpom == "22") -> pom00
+```
+
+```{r}
+borders_get(TERYT = pom00$TERYT) -> pom4
+ID <- as.integer("0012345") 
+str(ID)
+formatC(ID, format="d", width=7, flag="0")
+dim(pom)
+pom |> sapply(class) |> str()
+str(pom$TERYT)
+str(pom00)
+```
+```{r}
+pom$TERYT <- sub("_", "", pom$TERYT)
+any(is.na(match(pom$TERYT, pom00$TERYT)))
+
+
+## ----pl_m3, size="footnotesize"-----------------------------------------------
+pom |> merge(pom0, by = "TERYT") -> pom4 
+pom4
+```
+
+
+
+```{r}
+ssusers <- readxl::read_excel("social_services_users.xlsx")
+sapply(ssusers, class)
+names(ssusers)
+pom1 |> merge(ssusers, by.x = "TERYT",
+ by.y = "Code") -> pom4
+pom4
+```
+```{r}
+library(mapview)
+mapview(pom4, zcol="social_services_users")
+```
+
+```{r}
+pom_gisco1 <- gisco_get_nuts(year="2021", resolution="01",
+ spatialtype="RG", nuts_id="PL63")
+pom_gisco_tm1 <- st_transform(pom_gisco1, "EPSG:2180")
+pom5 <- st_intersection(pom4, pom_gisco_tm1)
+```
+```{r}
+pom4 |> st_geometry_type() |> table() -> tab5; tab5[tab5>0]
+```
+
+```{r}
+pom5 |> st_geometry_type() |> table() -> tab6; tab6[tab6>0]
+```
+
+```{r}
+pom5 |> st_cast("MULTIPOLYGON") -> pom5
+```
+
+```{r}
+mapview(pom5, zcol="social_services_users")
+```
+
+```{r}
+plot(density(pom5$social_services_users))
+```
+```{r}
+mapsf::mf_map(pom5, var="social_services_users", type="choro", breaks="geom",
+ nbreaks=7)
+```
+### III. 
+
+### AVERAGE GROSS MONTHLY SALARY 
+
+An inverse relationship between average gross monthly salary and crimes against property is assumed (the higher amount of average gross monthly salary, the lower amount of crimes against property).
