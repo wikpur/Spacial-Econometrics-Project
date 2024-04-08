@@ -56,15 +56,15 @@ It is assumed that the number of crimes committed is directly proportional to th
 
 ### POVERTY RATE
 
-A direct proportional relationship between poverty rate and crimes of theft is assumed (the higher rate of poverty, the higher amount of crimes of theft)
+A direct proportional relationship between social services users and crimes against property is assumed (the higher rate of social services users, the higher amount of crimes against property).
 
 ### AVERAGE GROSS MONTHLY SALARY 
 
-An inverse relationship between average gross monthly salary and crimes of theft is assumed (the higher amount of average gross monthly salary, the lower amount of crimes of theft).
+An inverse relationship between average gross monthly salary and crimes against property is assumed (the higher amount of average gross monthly salary, the lower amount of crimes against property).
 
 ### UNEMPLOYMENT RATE
 
-We assume that there is direct proportional relationship between unemployment rate and crimes of theft (the higher rate of unemployment, the higher amount of crimes of theft).
+We assume that there is direct proportional relationship between unemployment rate and crimes against propertyt (the higher rate of unemployment, the higher amount of crimes against property).
 
 ```{r}
 Sys.setenv("PROJ_NETWORK"="ON")
@@ -118,12 +118,17 @@ pom_gisco <- gisco_get_nuts(year="2021", resolution="01",
 pom_gisco_tm <- st_transform(pom_gisco, "EPSG:2180")
 pom4 <- st_intersection(pom3, pom_gisco_tm)
 ```
+
 ```{r}
 pom3 |> st_geometry_type() |> table() -> tab5; tab5[tab5>0]
 ```
+
+
 ```{r}
 pom4 |> st_geometry_type() |> table() -> tab6; tab6[tab6>0]
 ```
+
+
 ```{r}
 pom4 |> st_cast("MULTIPOLYGON") -> pom4
 ```
@@ -142,7 +147,7 @@ library(mapsf)
 mapsf::mf_map(pom4, var="Unemployment.x", type="choro", breaks="geom",
  nbreaks=7)
 ```
-
+##III. 
 
 ```{r}
 fn <- paste0(io_dir, "/pom4.gpkg")
