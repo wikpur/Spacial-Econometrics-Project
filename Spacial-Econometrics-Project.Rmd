@@ -32,17 +32,12 @@ The database contain only the crimes committed by an adult.
 
 ## II. DATA VISUALIZATION
 
-### CRIME ASCERTAINED 
-
-On the map (Figure 1), the spatial variability of voivodeships in terms of the intensity of total ascertained crimes in 2014 is depicted.
-
 ```{r}
 install.packages(sf)
 install.packages(rgugik)
 install.packages(bdl)
 install.packages(elevatr)
 install.packages(terra)
-
 install.packages("ggplot2")
 install.packages("tidyverse")
 
@@ -54,87 +49,6 @@ library(rgugik)
 library(sf)
 library(bdl)
 ```
-
-```{r}
-crimes_2018 <- subset(crimes, Rok == 2018)
-crimes_2021 <- subset(crimes, Rok == 2021)
-```
-
-
-```{r}
-#API --> for voivodeships (just a database)
-BDL_key <- Sys.getenv("+Qy/tema6GSWPGO38GElweJnD61XY6sPaHwbRQ88rMk=")
-options(bdl.api_private_key=BDL_key)
-(levs <- get_levels(lang="en"))
-levs |> as.data.frame() |>
- subset(name=="Poziom Polski", select=id, drop=TRUE) -> plev
-(units_lev1 <- get_units(level=plev, lang="en"))
-levs |> as.data.frame() |>
- subset(name=="Poziom Województw", select=id, drop=TRUE) -> wlev 
-(units_lev2 <- get_units(level=wlev, lang="en"))
-
-```
-
-```{r}
-#if we doint find data - here they are, but we have already uploaded
-
-get_subjects(lang="en")
-get_subjects("K3", lang="en")
-get_subjects("G7", lang="en")
-#choosing population by density and indicators
-(pop_persons <- get_variables("P2425", lang="en"))
-```
-```{r}
-get_subjects(lang="en")
-get_subjects("K4", lang="en")
-get_subjects("G12", lang="en")
-(unem_sex_voivo <- get_variables("P3965", lang="en"))
-```
-
-
-```{r}
-#data visualization
-library(elevatr)
-library(terra)
-```
-
-
-```{r}
-maule_sf |>  get_elev_raster(z = 7,
- clip = "locations", neg_to_na = TRUE) |> 
- rast() -> maule_elev
-```
-
-```{r}
-plot(maule_elev, col=rev(hcl.colors(50, "Dark Mint")))
-plot(st_geometry(maule_sf), add=TRUE)
-text(st_coordinates(st_centroid(st_geometry(maule_sf))),
- label=maule_sf$codigo_comuna)
-```
-
-```{r}
-library(mapview)
-mapview(pom5, zcol="density")
-
-#nie działa, co zrobić, żeby na tej mapce pojawiły się województwa??
-```
-
-
-
-```{r}
-library(ggplot2)
-library(tidyverse)
-
-```
-
-
-
-```{r}
-ggplot(mpg) +
-  geom_point(aes(x = displ, y = Jednostka podziału administracyjnego, size = Przestępstwa stwierdzone), color = "blue")
-```
-
-
 
 ### POPULATION DENSITY 
 
@@ -228,6 +142,8 @@ library(mapsf)
 mapsf::mf_map(pom4, var="Unemployment.x", type="choro", breaks="geom",
  nbreaks=7)
 ```
+
+
 ```{r}
 fn <- paste0(io_dir, "/pom4.gpkg")
 if (file.exists(fn)) tull <- file.remove(fn)
