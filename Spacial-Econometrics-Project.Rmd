@@ -13,20 +13,17 @@ output:
 knitr::opts_chunk$set(cache = TRUE)
 ```
 
-
-# *Spatial Trends in Property Crimes: A Focus on pre and post pandemic theft offenses across Poland's voivodeships*
+# *Spatial Trends in Property Crimes: A Focus on crimes against property across Poland's  Pomeranian voivodeship*
 
 ## INTRODUCTION
 
-The study aims to analyze spatial trends in property crimes, focusing on theft offenses across Poland's voivodeships. Further examination explores how socio-economic factors---like unemployment, poverty, salary, and population density --- affect crime rates, considering geographic contexts. The study compares data from 2018 and 2021 to assess whether the pandemic influenced temporal changes in the criminality.
+The study aims to analyze spatial trends in property crimes, in Poland in regards to the Pomeranian voivodeship and it’s counties. Further examination explores how socio-economic factors---like unemployment rate, social services, average gross monthly salary, population density and international migrations --- affect crime rates, considering geographic contexts. The study takes data from 2018.
 
 ## I. DATA DESCRIPTION
 
-The database comprises data on the number of ascertained and detected crimes in 2018 and 2021, across Poland's voivodeships.
+The database comprises data on the number of ascertained crimes in 2018 across Poland's Pomeranian voivodeship and it's counties.
 
 **Crime ascertained** is a crime concluded with confirmation of the occurrence of the prohibited act.
-
-**Crime detected** refers to ascertained crimes in which at least one suspect was identified in concluded preparatory proceedings or a minor who, according to the decision of the family court, committed a criminal act.
 
 The database contain only the crimes committed by an adult.
 
@@ -34,19 +31,12 @@ The database contain only the crimes committed by an adult.
 
 ## II. DATA VISUALIZATION
 
-### CRIME ASCERTAINED 
-
-### CRIME DETECTED
-
-On the map (Figure 1), the spatial variability of voivodeships in terms of the intensity of total ascertained crimes in 2014 is depicted.
-
 ```{r}
 install.packages(sf)
 install.packages(rgugik)
 install.packages(bdl)
 install.packages(elevatr)
 install.packages(terra)
-
 install.packages("ggplot2")
 install.packages("tidyverse")
 
@@ -59,90 +49,107 @@ library(sf)
 library(bdl)
 ```
 
-```{r}
-crimes_2018 <- subset(crimes, Rok == 2018)
-crimes_2021 <- subset(crimes, Rok == 2021)
-```
-
-
-```{r}
-#API --> for voivodeships (just a database)
-BDL_key <- Sys.getenv("BDL_key_RSB")
-options(bdl.api_private_key=BDL_key)
-(levs <- get_levels(lang="en"))
-levs |> as.data.frame() |>
- subset(name=="Poziom Województw", select=id, drop=TRUE) -> wlev 
-(units_lev <- get_units(level=wlev, lang="en"))
-
-```
-
-```{r}
-#if we doint find data - here they are, but we have already uploaded
-
-get_subjects(lang="en")
-get_subjects("K3", lang="en")
-get_subjects("G7", lang="en")
-#choosing population by density and indicators
-(pop_persons <- get_variables("P2425", lang="en"))
-```
-
-
-```{r}
-#data visualization
-library(elevatr)
-library(terra)
-```
-
-
-```{r}
-maule_sf |>  get_elev_raster(z = 7,
- clip = "locations", neg_to_na = TRUE) |> 
- rast() -> maule_elev
-```
-
-```{r}
-plot(maule_elev, col=rev(hcl.colors(50, "Dark Mint")))
-plot(st_geometry(maule_sf), add=TRUE)
-text(st_coordinates(st_centroid(st_geometry(maule_sf))),
- label=maule_sf$codigo_comuna)
-```
-
-```{r}
-library(mapview)
-mapview(pom5, zcol="density")
-
-#nie działa, co zrobić, żeby na tej mapce pojawiły się województwa??
-```
-
-
-
-```{r}
-library(ggplot2)
-library(tidyverse)
-
-```
-
-
-
-```{r}
-ggplot(mpg) +
-  geom_point(aes(x = displ, y = Jednostka podziału administracyjnego, size = Przestępstwa stwierdzone), color = "blue")
-```
-
-
-
 ### POPULATION DENSITY 
 
 It is assumed that the number of crimes committed is directly proportional to the population density of cities, meaning we expect a greater number of thefts in larger urban areas.
 
-### UNEMPLOYMENT RATE
-
-We assume that there is direct proportional relationship between unemployment rate and crimes of theft (the higher rate of unemployment, the higher amount of crimes of theft),
-
 ### POVERTY RATE
 
-A direct proportional relationship between poverty rate and crimes of theft is assumed (the higher rate of poverty, the higher amount of crimes of theft)
+A direct proportional relationship between social services users and crimes against property is assumed (the higher rate of social services users, the higher amount of crimes against property).
 
 ### AVERAGE GROSS MONTHLY SALARY 
 
-An inverse relationship between average gross monthly salary and crimes of theft is assumed (the higher amount of average gross monthly salary, the lower amount of crimes of theft).
+An inverse relationship between average gross monthly salary and crimes against property is assumed (the higher amount of average gross monthly salary, the lower amount of crimes against property).
+
+### UNEMPLOYMENT RATE
+
+We assume that there is direct proportional relationship between unemployment rate and crimes against propertyt (the higher rate of unemployment, the higher amount of crimes against property).
+
+```{r}
+Sys.setenv("PROJ_NETWORK"="ON")
+library(rgugik)
+library(sf)
+substring(county_names$TERYT, 1, 2) -> vpom
+county_names |> subset(subset = vpom == "22") -> pom0
+```
+
+```{r}
+borders_get(TERYT = pom0$TERYT) -> pom
+ID <- as.integer("0012345") 
+str(ID)
+formatC(ID, format="d", width=7, flag="0")
+dim(pom)
+pom |> sapply(class) |> str()
+str(pom$TERYT)
+str(pom0)
+```
+```{r}
+pom$TERYT <- sub("_", "", pom$TERYT)
+any(is.na(match(pom$TERYT, pom0$TERYT)))
+
+
+## ----pl_m3, size="footnotesize"-----------------------------------------------
+pom |> merge(pom0, by = "TERYT") -> pom1 
+pom1
+```
+```{r}
+unemp <- readxl::read_excel("Bezrobocie.xlsx")
+sapply(unemp, class)
+names(unemp)
+pom1 |> merge(unemp, by.x = "TERYT",
+ by.y = "Kod") -> pom2
+pom2
+pom2 |> merge(unemp, by.x = "NAME",
+ by.y = "County") -> pom3
+pom3
+```
+
+```{r}
+library(mapview)
+mapview(pom3, zcol="Unemployment.x")
+```
+
+```{r}
+install.packages("giscoR")
+library(giscoR)
+pom_gisco <- gisco_get_nuts(year="2021", resolution="01",
+ spatialtype="RG", nuts_id="PL63")
+pom_gisco_tm <- st_transform(pom_gisco, "EPSG:2180")
+pom4 <- st_intersection(pom3, pom_gisco_tm)
+```
+
+```{r}
+pom3 |> st_geometry_type() |> table() -> tab5; tab5[tab5>0]
+```
+
+
+```{r}
+pom4 |> st_geometry_type() |> table() -> tab6; tab6[tab6>0]
+```
+
+
+```{r}
+pom4 |> st_cast("MULTIPOLYGON") -> pom4
+```
+
+```{r}
+mapview(pom4, zcol="Unemployment.x")
+```
+
+```{r}
+plot(density(pom4$Unemployment.x))
+```
+
+```{r}
+install.packages("mapsf")
+library(mapsf)
+mapsf::mf_map(pom4, var="Unemployment.x", type="choro", breaks="geom",
+ nbreaks=7)
+```
+##III. 
+
+```{r}
+fn <- paste0(io_dir, "/pom4.gpkg")
+if (file.exists(fn)) tull <- file.remove(fn)
+try(st_write(pom4, fn))
+``` 
