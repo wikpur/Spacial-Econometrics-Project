@@ -140,11 +140,6 @@ if (file.exists(fn)) tull <- file.remove(fn)
 try(st_write(pom4, fn))
 ``` 
 
-
-### POPULATION DENSITY 
-
-It is assumed that the number of crimes committed is directly proportional to the population density of cities, meaning we expect a greater number of thefts in larger urban areas.
-
 ### SOCIAL SERVICES USERS
 
 A direct proportional relationship between social services users and crimes against property is assumed (the higher rate of social services users, the higher amount of crimes against property).
@@ -153,8 +148,8 @@ A direct proportional relationship between social services users and crimes agai
 Sys.setenv("PROJ_NETWORK"="ON")
 library(rgugik)
 library(sf)
-substring(county_names$TERYT, 1, 2) -> vpom4
-county_names |> subset(subset = vpom == "22") -> pom00
+substring(county_names$TERYT, 1, 2) -> vpom1
+county_names |> subset(subset = vpom1 == "22") -> pom00
 ```
 
 ```{r}
@@ -162,19 +157,19 @@ borders_get(TERYT = pom00$TERYT) -> pom4
 ID <- as.integer("0012345") 
 str(ID)
 formatC(ID, format="d", width=7, flag="0")
-dim(pom)
-pom |> sapply(class) |> str()
-str(pom$TERYT)
+dim(pom4)
+pom4 |> sapply(class) |> str()
+str(pom4$TERYT)
 str(pom00)
 ```
 ```{r}
-pom$TERYT <- sub("_", "", pom$TERYT)
-any(is.na(match(pom$TERYT, pom00$TERYT)))
+pom4$TERYT <- sub("_", "", pom4$TERYT)
+any(is.na(match(pom4$TERYT, pom00$TERYT)))
 
 
 ## ----pl_m3, size="footnotesize"-----------------------------------------------
-pom |> merge(pom0, by = "TERYT") -> pom4 
-pom4
+pom4 |> merge(pom00, by = "TERYT") -> pom5 
+pom5
 ```
 
 
@@ -183,42 +178,42 @@ pom4
 ssusers <- readxl::read_excel("social_services_users.xlsx")
 sapply(ssusers, class)
 names(ssusers)
-pom1 |> merge(ssusers, by.x = "TERYT",
- by.y = "Code") -> pom4
-pom4
+pom5 |> merge(ssusers, by.x = "TERYT",
+ by.y = "Code") -> pom6
+pom6
 ```
 ```{r}
 library(mapview)
-mapview(pom4, zcol="social_services_users")
+mapview(pom6, zcol="social_services_users")
 ```
 
 ```{r}
 pom_gisco1 <- gisco_get_nuts(year="2021", resolution="01",
  spatialtype="RG", nuts_id="PL63")
 pom_gisco_tm1 <- st_transform(pom_gisco1, "EPSG:2180")
-pom5 <- st_intersection(pom4, pom_gisco_tm1)
+pom7 <- st_intersection(pom6, pom_gisco_tm1)
 ```
 ```{r}
-pom4 |> st_geometry_type() |> table() -> tab5; tab5[tab5>0]
-```
-
-```{r}
-pom5 |> st_geometry_type() |> table() -> tab6; tab6[tab6>0]
+pom6 |> st_geometry_type() |> table() -> tab5; tab5[tab5>0]
 ```
 
 ```{r}
-pom5 |> st_cast("MULTIPOLYGON") -> pom5
+pom7 |> st_geometry_type() |> table() -> tab6; tab6[tab6>0]
 ```
 
 ```{r}
-mapview(pom5, zcol="social_services_users")
+pom7 |> st_cast("MULTIPOLYGON") -> pom7
 ```
 
 ```{r}
-plot(density(pom5$social_services_users))
+mapview(pom7, zcol="social_services_users")
+```
+
+```{r}
+plot(density(pom7$social_services_users))
 ```
 ```{r}
-mapsf::mf_map(pom5, var="social_services_users", type="choro", breaks="geom",
+mapsf::mf_map(pom7, var="social_services_users", type="choro", breaks="geom",
  nbreaks=7)
 ```
 ### III. 
@@ -226,3 +221,86 @@ mapsf::mf_map(pom5, var="social_services_users", type="choro", breaks="geom",
 ### AVERAGE GROSS MONTHLY SALARY 
 
 An inverse relationship between average gross monthly salary and crimes against property is assumed (the higher amount of average gross monthly salary, the lower amount of crimes against property).
+
+
+
+### POPULATION DENSITY 
+
+It is assumed that the number of crimes committed is directly proportional to the population density of cities, meaning we expect a greater number of thefts in larger urban areas.
+
+
+
+### CRIMES
+
+```{r}
+substring(county_names$TERYT, 1, 2) -> vpom4
+county_names |> subset(subset = vpom4 == "22") -> pom00000
+```
+
+```{r}
+borders_get(TERYT = pom00000$TERYT) -> pom16
+ID <- as.integer("0012345") 
+str(ID)
+formatC(ID, format="d", width=7, flag="0")
+dim(pom16)
+pom16 |> sapply(class) |> str()
+str(pom16$TERYT)
+str(pom00000)
+```
+
+```{r}
+pom16$TERYT <- sub("_", "", pom16$TERYT)
+any(is.na(match(pom16$TERYT, pom00000$TERYT)))
+
+
+## ----pl_m3, size="footnotesize"-----------------------------------------------
+pom16 |> merge(pom00000, by = "TERYT") -> pom17
+pom17
+```
+
+```{r}
+crimes <- readxl::read_excel("crimes.xlsx")
+sapply(crimes, class)
+names(crimes)
+pom17 |> merge(crimes, by.x = "TERYT",
+ by.y = "Code") -> pom18
+pom18
+```
+
+```{r}
+mapview(pom18, zcol="Crimes")
+```
+
+```{r}
+pom_gisco4 <- gisco_get_nuts(year="2021", resolution="01",
+ spatialtype="RG", nuts_id="PL63")
+pom_gisco_tm4 <- st_transform(pom_gisco4, "EPSG:2180")
+pom19 <- st_intersection(pom18, pom_gisco_tm4)
+```
+
+```{r}
+pom18 |> st_geometry_type() |> table() -> tab5; tab5[tab5>0]
+```
+
+```{r}
+pom19 |> st_geometry_type() |> table() -> tab6; tab6[tab6>0]
+```
+
+
+```{r}
+pom19 |> st_cast("MULTIPOLYGON") -> pom19
+```
+
+```{r}
+mapview(pom19, zcol="Crimes")
+```
+
+```{r}
+plot(density(pom19$Crimes))
+```
+
+```{r}
+mapsf::mf_map(pom19, var="Crimes", type="choro", breaks="geom",
+ nbreaks=7)
+```
+
