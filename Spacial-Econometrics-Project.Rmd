@@ -479,6 +479,3 @@ plot(pom_queen_nb, geom, add=TRUE)
 plot(geom, border="grey")
 plot(pom_1_nb, geom, add=TRUE)
 ```
-
-
-
