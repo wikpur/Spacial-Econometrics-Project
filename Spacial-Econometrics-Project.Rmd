@@ -52,7 +52,7 @@ library(bdl)
 
 ### UNEMPLOYMENT RATE
 
-We assume that there is direct proportional relationship between unemployment rate and crimes against propertyt (the higher rate of unemployment, the higher amount of crimes against property).
+We assume that there is direct proportional relationship between unemployment rate and crimes against property (the higher rate of unemployment, the higher amount of crimes against property).
 
 ```{r}
 Sys.setenv("PROJ_NETWORK"="ON")
@@ -479,3 +479,47 @@ plot(pom_queen_nb, geom, add=TRUE)
 plot(geom, border="grey")
 plot(pom_1_nb, geom, add=TRUE)
 ```
+
+
+
+## TEST OF SPACIAL AUTOCORRELATION
+
+
+```{r}
+library(spdep)
+
+lw <- nb2listw(pom_queen_nb, style = "W")
+
+moran_test <- moran.test(pom18$Crimes, listw = lw, randomisation = TRUE, alternative = "two.sided")
+print(moran_test)
+
+```
+The Moran's I test was conducted to examine whether there is spatial autocorrelation in property crimes across Poland's Pomeranian voivodeship. 
+(Spatial autocorrelation refers to the tendency of similar values to cluster together in space.)
+
+Since the p-value (0.2962) is greater than the conventional significance level of 0.05, we fail to reject the null hypothesis. This suggests that there is insufficient evidence to conclude that there is significant spatial autocorrelation in the variable Crimes across the region.
+
+
+###TEST OF RESIDUAL SPATIAL AUTOCORRELATION
+
+```{r}
+
+lm_null <- lm(Crimes ~ 1, data = pom18)
+
+moran_test <- moran.test(residuals(lm_null), listw = lw, randomisation = FALSE, alternative = "two.sided")
+
+print(moran_test)
+
+```
+The Moran's I test conducted on the residuals of the linear regression model indicates no significant spatial autocorrelation (p = 0.4692). Thus, there is no evidence to suggest that neighboring regions exhibit similar crime rates beyond what would be expected by chance.
+
+
+
+
+
+
+
+
+
+
+
