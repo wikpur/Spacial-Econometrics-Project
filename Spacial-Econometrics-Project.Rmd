@@ -447,6 +447,40 @@ library(sf)
 install.packages("spdep")
 library(spdep)
 ```
+```{r}
+fn <- ("pom19.gpkg")
+if (file.exists(fn)) tull <- file.remove(fn)
+try(st_write(pom19, fn))
+```
+
+```{r}
+lf <- list.files(pattern="pom19.gpkg")
+if (length(lf) > 0L) tull <- file.remove(lf)
+```
+
+```{r}
+str(pom19$NUTS_ID)
+pom19$NUTS_ID <- 1:nrow(pom19)
+st_write(pom19, dsn=fn)
+```
+
+```{r}
+pom19a <- st_read(dsn=fn)
+```
+
+```{r}
+isTRUE(all.equal(st_geometry(pom6), st_geometry(pom6a)))
+```
+
+```{r}
+names(pom6)
+names(pom6a)
+```
+
+```{r}
+pom6a$type <- factor(pom6a$type)
+pom6a$area_km2 <- units::set_units(pom6a$area_km2, "km2")
+```
 
 ```{r}
 (pom1 |> poly2nb(queen=FALSE,
@@ -480,6 +514,20 @@ plot(geom, border="grey")
 plot(pom_1_nb, geom, add=TRUE)
 ```
 
+```{r}
+pom_queen_nb |> nb2listw(style="W") -> pom_queen_lw
+summary(pom_queen_lw)
+```
+
+
+```{r}
+pom_queen_nb |> nb2listw(style="W") -> pom_queen_lw
+summary(pom_queen_lw)
+```
+
+```{r}
+pom_queen_lw$weights |> sapply(sum) |> unique()
+```
 
 
 ## TEST OF SPACIAL AUTOCORRELATION
@@ -512,14 +560,5 @@ print(moran_test)
 
 ```
 The Moran's I test conducted on the residuals of the linear regression model indicates no significant spatial autocorrelation (p = 0.4692). Thus, there is no evidence to suggest that neighboring regions exhibit similar crime rates beyond what would be expected by chance.
-
-
-
-
-
-
-
-
-
 
 
