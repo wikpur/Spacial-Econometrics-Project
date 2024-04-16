@@ -52,7 +52,7 @@ library(bdl)
 
 ### UNEMPLOYMENT RATE
 
-We assume that there is direct proportional relationship between unemployment rate and crimes against property (the higher rate of unemployment, the higher amount of crimes against property).
+We assume that there is direct proportional relationship between unemployment rate and crimes against propertyt (the higher rate of unemployment, the higher amount of crimes against property).
 
 ```{r}
 Sys.setenv("PROJ_NETWORK"="ON")
@@ -443,70 +443,32 @@ mapsf::mf_map(pom19, var="Crimes", type="choro", breaks="geom",
 ```
 
 ```{r}
-library(sf)
-install.packages("spdep")
+library(sp)
 library(spdep)
-```
-```{r}
-fn <- ("pom19.gpkg")
-if (file.exists(fn)) tull <- file.remove(fn)
-try(st_write(pom19, fn))
+(pom19 |> poly2nb(queen=FALSE,
+ row.names=pom19$TERYT) -> pom_rook_nb)
 ```
 
 ```{r}
-lf <- list.files(pattern="pom19.gpkg")
-if (length(lf) > 0L) tull <- file.remove(lf)
+(pom19 |> poly2nb(queen=TRUE,
+ row.names=pom19$TERYT) -> pom_queen_nb)
 ```
 
 ```{r}
-str(pom19$NUTS_ID)
-pom19$NUTS_ID <- 1:nrow(pom19)
-st_write(pom19, dsn=fn)
-```
-
-```{r}
-pom19a <- st_read(dsn=fn)
-```
-
-```{r}
-isTRUE(all.equal(st_geometry(pom6), st_geometry(pom6a)))
-```
-
-```{r}
-names(pom6)
-names(pom6a)
-```
-
-```{r}
-pom6a$type <- factor(pom6a$type)
-pom6a$area_km2 <- units::set_units(pom6a$area_km2, "km2")
-```
-
-```{r}
-(pom1 |> poly2nb(queen=FALSE,
- row.names=pom1$TERYT) -> pom_rook_nb)
-```
-
-```{r}
-(pom1 |> poly2nb(queen=TRUE,
- row.names=pom1$TERYT) -> pom_queen_nb)
-```
-
-```{r}
-(pom1 |> poly2nb(queen=FALSE, row.names=pom1$TERYT,
+(pom19 |> poly2nb(queen=FALSE, row.names=pom19$TERYT,
  snap=0.00001) -> pom_rook_nb)
-(pom1 |> poly2nb(queen=TRUE, row.names=pom1$TERYT,
+(pom19 |> poly2nb(queen=TRUE, row.names=pom19$TERYT,
  snap=0.00001) -> pom_queen_nb)
 ```
 
 ```{r}
-geom <- st_geometry(pom1) 
+geom <- st_geometry(pom19) 
 plot(geom, border="grey")
 plot(pom_queen_nb, geom, add=TRUE)
 ```
 ```{r}
 (geom |> st_point_on_surface() |> knearneigh(k=5) |>
- knn2nb(row.names=pom1$TERYT) -> pom_1_nb)
+ knn2nb(row.names=pom19$TERYT) -> pom_1_nb)
 ```
 
 ```{r}
@@ -519,46 +481,6 @@ pom_queen_nb |> nb2listw(style="W") -> pom_queen_lw
 summary(pom_queen_lw)
 ```
 
-
-```{r}
-pom_queen_nb |> nb2listw(style="W") -> pom_queen_lw
-summary(pom_queen_lw)
-```
-
 ```{r}
 pom_queen_lw$weights |> sapply(sum) |> unique()
 ```
-
-
-## TEST OF SPACIAL AUTOCORRELATION
-
-
-```{r}
-library(spdep)
-
-lw <- nb2listw(pom_queen_nb, style = "W")
-
-moran_test <- moran.test(pom18$Crimes, listw = lw, randomisation = TRUE, alternative = "two.sided")
-print(moran_test)
-
-```
-The Moran's I test was conducted to examine whether there is spatial autocorrelation in property crimes across Poland's Pomeranian voivodeship. 
-(Spatial autocorrelation refers to the tendency of similar values to cluster together in space.)
-
-Since the p-value (0.2962) is greater than the conventional significance level of 0.05, we fail to reject the null hypothesis. This suggests that there is insufficient evidence to conclude that there is significant spatial autocorrelation in the variable Crimes across the region.
-
-
-###TEST OF RESIDUAL SPATIAL AUTOCORRELATION
-
-```{r}
-
-lm_null <- lm(Crimes ~ 1, data = pom18)
-
-moran_test <- moran.test(residuals(lm_null), listw = lw, randomisation = FALSE, alternative = "two.sided")
-
-print(moran_test)
-
-```
-The Moran's I test conducted on the residuals of the linear regression model indicates no significant spatial autocorrelation (p = 0.4692). Thus, there is no evidence to suggest that neighboring regions exhibit similar crime rates beyond what would be expected by chance.
-
-
