@@ -484,3 +484,207 @@ summary(pom_queen_lw)
 ```{r}
 pom_queen_lw$weights |> sapply(sum) |> unique()
 ```
+
+## TEST OF SPACIAL AUTOCORRELATION
+
+
+```{r}
+library(spdep)
+
+lw <- nb2listw(pom_queen_nb, style = "W")
+
+moran_test <- moran.test(wpom2$crimes, listw = lw, randomisation = TRUE, alternative = "two.sided")
+print(moran_test)
+
+```
+The Moran's I test was conducted to examine whether there is spatial autocorrelation in property crimes across Poland's Pomeranian voivodeship. 
+(Spatial autocorrelation refers to the tendency of similar values to cluster together in space.)
+
+Since the p-value (0.2962) is greater than the conventional significance level of 0.05, we fail to reject the null hypothesis. This suggests that there is insufficient evidence to conclude that there is significant spatial autocorrelation in the variable crimes across the region.
+
+
+###TEST OF RESIDUAL SPATIAL AUTOCORRELATION
+
+```{r}
+
+lm_null <- lm(crimes ~ 1, data = wpom2)
+
+moran_test <- moran.test(residuals(lm_null), listw = lw, randomisation = FALSE, alternative = "two.sided")
+
+print(moran_test)
+
+```
+The Moran's I test conducted on the residuals of the linear regression model indicates no significant spatial autocorrelation (p = 0.4692). Thus, there is no evidence to suggest that neighboring regions exhibit similar crime rates beyond what would be expected by chance.
+
+```{r}
+lm.morantest(lm_null, listw=lw, alternative="two.sided")
+```
+
+```{r}
+substring(county_names$TERYT, 1, 2) -> vopom
+county_names |> subset(subset = vopom == "22") -> pom01
+```
+
+```{r}
+borders_get(TERYT = pom0$TERYT) -> wpom
+ID <- as.integer("0012345") 
+str(ID)
+formatC(ID, format="d", width=7, flag="0")
+dim(wpom)
+wpom |> sapply(class) |> str()
+str(wpom$TERYT)
+str(pom01)
+```
+```{r}
+wpom$TERYT <- sub("_", "", wpom$TERYT)
+any(is.na(match(wpom$TERYT, pom01$TERYT)))
+
+
+## ----pl_m3, size="footnotesize"-----------------------------------------------
+wpom |> merge(pom01, by = "TERYT") -> wpom1 
+wpom1
+```
+```{r}
+all <- readxl::read_excel("all_variables.xlsx")
+sapply(all, class)
+names(all)
+wpom1 |> merge(all, by.x = "TERYT",
+ by.y = "Code") -> wpom2
+wpom2
+```
+
+```{r}
+form_pre <- wpom2$crimes ~ wpom2$popdens + wpom2$avgsal +
+ wpom2$unemp + wpom2$ssusers
+lm_obj_pre <- lm(form_pre, data= wpom2)
+moran.test(residuals(lm_obj_pre), listw=lw,
+ randomisation=FALSE, alternative="two.sided")
+```
+```{r}
+lm.morantest(lm_obj_pre, listw=lw, alternative="two.sided")
+```
+```{r}
+lm.morantest.sad(lm_obj_pre, listw=lw, alternative="two.sided")
+```
+
+```{r}
+lm.morantest.exact(lm_obj_pre, listw=lw, alternative="two.sided")
+```
+## RAO'S SCORE
+
+```{r}
+summary(lm.RStests(lm_obj_pre, listw=lw, test="all"))
+```
+```{r}
+summary(SD.RStests(lm_obj_pre, listw=lw, test="SDM",
+ Durbin=update(form_pre, ~ . - Metrop)))
+```
+```{r}
+summary(SD.RStests(lm_obj_pre, listw=lw, test="SDEM",
+ Durbin=update(form_pre, ~ . - Metrop)))
+```
+```{r}
+install.packages("spatialreg")
+library(spatialreg)
+SLX_obj <- lmSLX(form_pre, data=wpom2, listw=lw,
+ Durbin=update(form_pre, ~ . - Metrop))
+summary(lm.RStests(SLX_obj, listw=lw, test="all"))
+```
+## CAR AND SAR
+
+```{r}
+library(spdep)
+lwB <- nb2listw(pom_queen_nb, style="B")
+library(spatialreg)
+car1 <- spautolm(form_pre, data=wpom2, listw=lwB, family="CAR")
+summary(car1, Nagelkerke=TRUE)
+```
+```{r}
+wpom2$ranef_ml <- car1$fit$signal_stochastic
+```
+
+```{r}
+install.packages("hglm")
+```
+
+```{r}
+library(hglm)
+W <- as(lwB, "CsparseMatrix")
+car2 <- hglm(fixed=form_pre, random= ~ 1|TERYT, data=wpom2, family = gaussian(), rand.family=CAR(D=W))
+car2
+```
+```{r}
+wpom2$ranef_hglm <- c(unname(car2$ranef))
+```
+
+
+```{r}
+install.packages("mgcv")
+library(mgcv)
+```
+
+```{r}
+names(pom_queen_nb) <- attr(pom_queen_nb, "region.id")
+wpom2$TERYT <- factor(wpom2$TERYT)
+car3 <- gam(update(form_pre, . ~ . + s(TERYT, bs="mrf", xt=list(nb=pom_queen_nb))), data=wpom2)
+summary(car3)
+
+pom_queen_nb
+```
+```{r}
+wpom2$ranef_mrf <- unname(predict(car3, type="terms")[, "s(TERYT)"])
+```
+
+```{r}
+cbind(ML=coef(car1), HGLM=c(car2$fixef, NA), MRF=c(coef(car3)[1:7], NA))
+```
+```{r}
+cor(st_drop_geometry(wpom2)[, c("ranef_ml", "ranef_hglm", "ranef_mrf")])
+```
+```{r}
+install.packages("tmap")
+library(tmap)
+```
+
+```{r}
+tm_shape(wpom2) + tm_fill(c("ranef_ml", "ranef_hglm", "ranef_mrf"), title="random effect", n=9, midpoint=0, style="fisher") + tm_borders() + tm_facets(free.scales=FALSE) + tm_layout(panel.labels=c("ML", "HGLM", "MRF"))
+```
+##SIMULTANEOUS AUTOREGRESSIVE MODELS
+
+```{r}
+sar1B <- spautolm(form_pre, data=wpom2, listw=lwB, family="SAR")
+summary(sar1B, Nagelkerke=TRUE)
+```
+```{r}
+1/range(eigenw(lwB))
+```
+```{r}
+lw <- nb2listw(pom_queen_nb, style="W")
+e <- eigenw(lw)
+1/range(e)
+```
+```{r}
+sar1 <- spautolm(form_pre, data=wpom2, listw=lw, family="SAR", control=list(pre_eig=e))
+summary(sar1, Nagelkerke=TRUE)
+```
+```{r}
+SEM_pre <- errorsarlm(form_pre, data=wpom2, listw=lw, control=list(pre_eig=e))
+summary(SEM_pre, Nagelkerke=TRUE)
+```
+
+```{r}
+all.equal(coef(SEM_pre)[c(2:8, 1)], coef(sar1), tol=2e-07)
+
+SEM_pre
+```
+
+```{r}
+sar1
+```
+
+```{r}
+Hausman.test(SEM_pre)
+```
+## Spatial econometrics models
+
+
