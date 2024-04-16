@@ -40,7 +40,12 @@ install.packages(elevatr)
 install.packages(terra)
 install.packages("ggplot2")
 install.packages("tidyverse")
-
+install.packages("giscoR")
+install.packages("mapsf")
+install.packages("spatialreg")
+install.packages("hglm")
+install.packages("mgcv")
+install.packages("tmap")
 ```
 
 ```{r}
@@ -48,88 +53,92 @@ Sys.setenv("PROJ_NETWORK"="ON")
 library(rgugik)
 library(sf)
 library(bdl)
+library(giscoR)
+library(mapsf)
+library(sp)
+library(spdep)
+library(spatialreg)
+library(hglm)
+library(mgcv)
+library(tmap)
+```
+### CREATING THE DATABASE 
+
+```{r}
+substring(county_names$TERYT, 1, 2) -> vopom
+county_names |> subset(subset = vopom == "22") -> pom01
+```
+
+```{r}
+borders_get(TERYT = pom0$TERYT) -> wpom
+ID <- as.integer("0012345") 
+str(ID)
+formatC(ID, format="d", width=7, flag="0")
+dim(wpom)
+wpom |> sapply(class) |> str()
+str(wpom$TERYT)
+str(pom01)
+```
+
+```{r}
+wpom$TERYT <- sub("_", "", wpom$TERYT)
+any(is.na(match(wpom$TERYT, pom01$TERYT)))
+
+
+## ----pl_m3, size="footnotesize"-----------------------------------------------
+wpom |> merge(pom01, by = "TERYT") -> wpom1 
+wpom1
+```
+
+```{r}
+all <- readxl::read_excel("all_variables.xlsx")
+sapply(all, class)
+names(all)
+wpom1 |> merge(all, by.x = "TERYT",
+ by.y = "Code") -> wpom2
+wpom2
 ```
 
 ### UNEMPLOYMENT RATE
 
-We assume that there is direct proportional relationship between unemployment rate and crimes against propertyt (the higher rate of unemployment, the higher amount of crimes against property).
-
-```{r}
-Sys.setenv("PROJ_NETWORK"="ON")
-library(rgugik)
-library(sf)
-substring(county_names$TERYT, 1, 2) -> vpom
-county_names |> subset(subset = vpom == "22") -> pom0
-```
-
-```{r}
-borders_get(TERYT = pom0$TERYT) -> pom
-ID <- as.integer("0012345") 
-str(ID)
-formatC(ID, format="d", width=7, flag="0")
-dim(pom)
-pom |> sapply(class) |> str()
-str(pom$TERYT)
-str(pom0)
-```
-```{r}
-pom$TERYT <- sub("_", "", pom$TERYT)
-any(is.na(match(pom$TERYT, pom0$TERYT)))
-
-
-## ----pl_m3, size="footnotesize"-----------------------------------------------
-pom |> merge(pom0, by = "TERYT") -> pom1 
-pom1
-```
-```{r}
-unemp <- readxl::read_excel("Bezrobocie.xlsx")
-sapply(unemp, class)
-names(unemp)
-pom1 |> merge(unemp, by.x = "TERYT",
- by.y = "Kod") -> pom2
-pom2
-```
+We assume that there is direct proportional relationship between unemployment rate and crimes against propertyt (the higher rate of unemployment, the higher amount of crimes against property).```
 
 ```{r}
 library(mapview)
-mapview(pom2, zcol="Unemployment")
+mapview(wpom2, zcol="unemp")
 ```
 
 ```{r}
-install.packages("giscoR")
-library(giscoR)
 pom_gisco <- gisco_get_nuts(year="2021", resolution="01",
  spatialtype="RG", nuts_id="PL63")
 pom_gisco_tm <- st_transform(pom_gisco, "EPSG:2180")
-pom3 <- st_intersection(pom2, pom_gisco_tm)
+wpom3 <- st_intersection(wpom2, pom_gisco_tm)
 ```
 
 ```{r}
-pom2 |> st_geometry_type() |> table() -> tab5; tab5[tab5>0]
-```
-
-
-```{r}
-pom3 |> st_geometry_type() |> table() -> tab6; tab6[tab6>0]
+wpom2 |> st_geometry_type() |> table() -> tab5; tab5[tab5>0]
 ```
 
 
 ```{r}
-pom3 |> st_cast("MULTIPOLYGON") -> pom3
+wpom3 |> st_geometry_type() |> table() -> tab6; tab6[tab6>0]
+```
+
+
+```{r}
+wpom3 |> st_cast("MULTIPOLYGON") -> pom3
 ```
 
 ```{r}
-mapview(pom3, zcol="Unemployment")
+mapview(wpom3, zcol="unemp")
 ```
 
 ```{r}
-plot(density(pom3$Unemployment))
+plot(density(wpom3$unemp))
 ```
 
 ```{r}
-install.packages("mapsf")
-library(mapsf)
-mapsf::mf_map(pom3, var="Unemployment", type="choro", breaks="geom",
+mapsf::mf_map(wpom3, var="unemp", type="choro", breaks="geom",
  nbreaks=7)
 ```
 
@@ -138,156 +147,32 @@ mapsf::mf_map(pom3, var="Unemployment", type="choro", breaks="geom",
 A direct proportional relationship between social services users and crimes against property is assumed (the higher rate of social services users, the higher amount of crimes against property).
 
 ```{r}
-Sys.setenv("PROJ_NETWORK"="ON")
-library(rgugik)
-library(sf)
-substring(county_names$TERYT, 1, 2) -> vpom1
-county_names |> subset(subset = vpom1 == "22") -> pom00
+mapview(wpom3, zcol="ssusers")
 ```
 
 ```{r}
-borders_get(TERYT = pom00$TERYT) -> pom4
-ID <- as.integer("0012345") 
-str(ID)
-formatC(ID, format="d", width=7, flag="0")
-dim(pom4)
-pom4 |> sapply(class) |> str()
-str(pom4$TERYT)
-str(pom00)
-```
-```{r}
-pom4$TERYT <- sub("_", "", pom4$TERYT)
-any(is.na(match(pom4$TERYT, pom00$TERYT)))
-
-
-## ----pl_m3, size="footnotesize"-----------------------------------------------
-pom4 |> merge(pom00, by = "TERYT") -> pom5 
-pom5
-```
-
-
-
-```{r}
-ssusers <- readxl::read_excel("social_services_users.xlsx")
-sapply(ssusers, class)
-names(ssusers)
-pom5 |> merge(ssusers, by.x = "TERYT",
- by.y = "Code") -> pom6
-pom6
-```
-```{r}
-library(mapview)
-mapview(pom6, zcol="social_services_users")
+plot(density(wpom3$ssusers))
 ```
 
 ```{r}
-pom_gisco1 <- gisco_get_nuts(year="2021", resolution="01",
- spatialtype="RG", nuts_id="PL63")
-pom_gisco_tm1 <- st_transform(pom_gisco1, "EPSG:2180")
-pom7 <- st_intersection(pom6, pom_gisco_tm1)
-```
-```{r}
-pom6 |> st_geometry_type() |> table() -> tab5; tab5[tab5>0]
-```
-
-```{r}
-pom7 |> st_geometry_type() |> table() -> tab6; tab6[tab6>0]
-```
-
-```{r}
-pom7 |> st_cast("MULTIPOLYGON") -> pom7
-```
-
-```{r}
-mapview(pom7, zcol="social_services_users")
-```
-
-```{r}
-plot(density(pom7$social_services_users))
-```
-
-```{r}
-mapsf::mf_map(pom7, var="social_services_users", type="choro", breaks="geom",
+mapsf::mf_map(wpom3, var="ssusers", type="choro", breaks="geom",
  nbreaks=7)
 ```
-### III. TO BE CONTINUED!!!!
 
 ### AVERAGE GROSS MONTHLY SALARY 
 
 An inverse relationship between average gross monthly salary and crimes against property is assumed (the higher amount of average gross monthly salary, the lower amount of crimes against property).
 
 ```{r}
-Sys.setenv("PROJ_NETWORK"="ON")
-substring(county_names$TERYT, 1, 2) -> vpom2
-county_names |> subset(subset = vpom2 == "22") -> pom000
+mapview(wpom3, zcol="avgsal")
 ```
 
 ```{r}
-borders_get(TERYT = pom000$TERYT) -> pom8
-ID <- as.integer("0012345") 
-str(ID)
-formatC(ID, format="d", width=7, flag="0")
-dim(pom8)
-pom8 |> sapply(class) |> str()
-str(pom8$TERYT)
-str(pom000)
+plot(density(wpom3$avgsal))
 ```
 
 ```{r}
-pom8$TERYT <- sub("_", "", pom8$TERYT)
-any(is.na(match(pom8$TERYT, pom000$TERYT)))
-
-
-## ----pl_m3, size="footnotesize"-----------------------------------------------
-pom8 |> merge(pom000, by = "TERYT") -> pom9 
-pom9
-```
-
-
-```{r}
-avgsal <- readxl::read_excel("monthly_average_salary.xlsx")
-sapply(avgsal, class)
-names(avgsal)
-pom9 |> merge(avgsal, by.x = "TERYT",
-              by.y = "Code") -> pom10
-pom10
-```
-
-```{r}
-library(mapview)
-mapview(pom10, zcol="Average_Monthly_Gross_Wages_and_Salaries")
-```
-
-```{r}
-pom_gisco2 <- gisco_get_nuts(year="2021", resolution="01",
-                             spatialtype="RG", nuts_id="PL63")
-pom_gisco_tm2 <- st_transform(pom_gisco2, "EPSG:2180")
-pom11 <- st_intersection(pom10, pom_gisco_tm2)
-```
-
-```{r}
-pom10 |> st_geometry_type() |> table() -> tab5; tab5[tab5>0]
-```
-
-
-```{r}
-pom11 |> st_geometry_type() |> table() -> tab6; tab6[tab6>0]
-```
-
-```{r}
-pom11 |> st_cast("MULTIPOLYGON") -> pom11
-```
-
-```{r}
-mapview(pom11, zcol="Average_Monthly_Gross_Wages_and_Salaries")
-```
-
-```{r}
-plot(density(pom11$Average_Monthly_Gross_Wages_and_Salaries))
-```
-
-```{r}
-mapsf::mf_map(pom11, var="Average_Monthly_Gross_Wages_and_Salaries", type="choro", breaks="geom",
+mapsf::mf_map(wpom3, var="avgsal", type="choro", breaks="geom",
               nbreaks=7)
 ```
 
@@ -296,179 +181,58 @@ mapsf::mf_map(pom11, var="Average_Monthly_Gross_Wages_and_Salaries", type="choro
 It is assumed that the number of crimes committed is directly proportional to the population density of cities, meaning we expect a greater number of thefts in larger urban areas.
 
 ```{r}
-substring(county_names$TERYT, 1, 2) -> vpom3
-county_names |> subset(subset = vpom3 == "22") -> pom0000
+mapview(wpom3, zcol="popdens")
 ```
 
 ```{r}
-borders_get(TERYT = pom0000$TERYT) -> pom12
-ID <- as.integer("0012345") 
-str(ID)
-formatC(ID, format="d", width=7, flag="0")
-dim(pom12)
-pom12 |> sapply(class) |> str()
-str(pom12$TERYT)
-str(pom0000)
+plot(density(wpom3$popdens))
 ```
 
 ```{r}
-pom12$TERYT <- sub("_", "", pom12$TERYT)
-any(is.na(match(pom12$TERYT, pom0000$TERYT)))
-
-
-## ----pl_m3, size="footnotesize"-----------------------------------------------
-pom12 |> merge(pom0000, by = "TERYT") -> pom13 
-pom13
-```
-
-```{r}
-popdens <- readxl::read_excel("population_density.xlsx")
-sapply(popdens, class)
-names(popdens)
-pom13 |> merge(popdens, by.x = "TERYT",
-               by.y = "Code") -> pom14
-pom14
-```
-
-```{r}
-mapview(pom14, zcol="Population Density")
-```
-
-```{r}
-pom_gisco3 <- gisco_get_nuts(year="2021", resolution="01",
-                             spatialtype="RG", nuts_id="PL63")
-pom_gisco_tm3 <- st_transform(pom_gisco3, "EPSG:2180")
-pom15 <- st_intersection(pom14, pom_gisco_tm3)
-```
-
-```{r}
-pom14 |> st_geometry_type() |> table() -> tab5; tab5[tab5>0]
-```
-
-
-```{r}
-pom15 |> st_geometry_type() |> table() -> tab6; tab6[tab6>0]
-```
-
-```{r}
-pom15 |> st_cast("MULTIPOLYGON") -> pom15
-pom15
-```
-
-```{r}
-mapview(pom15, zcol="Population.Density")
-```
-
-```{r}
-plot(density(pom15$Population.Density))
-```
-
-```{r}
-mapsf::mf_map(pom15, var="Population.Density", type="choro", breaks="geom",
+mapsf::mf_map(wpom3, var="popdens", type="choro", breaks="geom",
               nbreaks=7)
 ```
 
 ### CRIMES
 
 ```{r}
-substring(county_names$TERYT, 1, 2) -> vpom4
-county_names |> subset(subset = vpom4 == "22") -> pom00000
+mapview(wpom3, zcol="crimes")
 ```
 
 ```{r}
-borders_get(TERYT = pom00000$TERYT) -> pom16
-ID <- as.integer("0012345") 
-str(ID)
-formatC(ID, format="d", width=7, flag="0")
-dim(pom16)
-pom16 |> sapply(class) |> str()
-str(pom16$TERYT)
-str(pom00000)
+plot(density(wpom3$crimes))
 ```
 
 ```{r}
-pom16$TERYT <- sub("_", "", pom16$TERYT)
-any(is.na(match(pom16$TERYT, pom00000$TERYT)))
-
-
-## ----pl_m3, size="footnotesize"-----------------------------------------------
-pom16 |> merge(pom00000, by = "TERYT") -> pom17
-pom17
-```
-
-```{r}
-crimes <- readxl::read_excel("crimes.xlsx")
-sapply(crimes, class)
-names(crimes)
-pom17 |> merge(crimes, by.x = "TERYT",
- by.y = "Code") -> pom18
-pom18
-```
-
-```{r}
-mapview(pom18, zcol="Crimes")
-```
-
-```{r}
-pom_gisco4 <- gisco_get_nuts(year="2021", resolution="01",
- spatialtype="RG", nuts_id="PL63")
-pom_gisco_tm4 <- st_transform(pom_gisco4, "EPSG:2180")
-pom19 <- st_intersection(pom18, pom_gisco_tm4)
-```
-
-```{r}
-pom18 |> st_geometry_type() |> table() -> tab5; tab5[tab5>0]
-```
-
-```{r}
-pom19 |> st_geometry_type() |> table() -> tab6; tab6[tab6>0]
-```
-
-
-```{r}
-pom19 |> st_cast("MULTIPOLYGON") -> pom19
-```
-
-```{r}
-mapview(pom19, zcol="Crimes")
-```
-
-```{r}
-plot(density(pom19$Crimes))
-```
-
-```{r}
-mapsf::mf_map(pom19, var="Crimes", type="choro", breaks="geom",
+mapsf::mf_map(wpom3, var="crimes", type="choro", breaks="geom",
  nbreaks=7)
 ```
 
 ```{r}
-library(sp)
-library(spdep)
-(pom19 |> poly2nb(queen=FALSE,
- row.names=pom19$TERYT) -> pom_rook_nb)
+(wpom3 |> poly2nb(queen=FALSE,
+ row.names=wpom3$TERYT) -> pom_rook_nb)
 ```
 
 ```{r}
-(pom19 |> poly2nb(queen=TRUE,
- row.names=pom19$TERYT) -> pom_queen_nb)
+(wpom3 |> poly2nb(queen=TRUE,
+ row.names=wpom3$TERYT) -> pom_queen_nb)
 ```
 
 ```{r}
-(pom19 |> poly2nb(queen=FALSE, row.names=pom19$TERYT,
+(wpom3 |> poly2nb(queen=FALSE, row.names=wpom3$TERYT,
  snap=0.00001) -> pom_rook_nb)
-(pom19 |> poly2nb(queen=TRUE, row.names=pom19$TERYT,
+(wpom3 |> poly2nb(queen=TRUE, row.names=wpom3$TERYT,
  snap=0.00001) -> pom_queen_nb)
 ```
 
 ```{r}
-geom <- st_geometry(pom19) 
+geom <- st_geometry(wpom2) 
 plot(geom, border="grey")
 plot(pom_queen_nb, geom, add=TRUE)
 ```
 ```{r}
 (geom |> st_point_on_surface() |> knearneigh(k=5) |>
- knn2nb(row.names=pom19$TERYT) -> pom_1_nb)
+ knn2nb(row.names=wpom2$TERYT) -> pom_1_nb)
 ```
 
 ```{r}
@@ -489,11 +253,10 @@ pom_queen_lw$weights |> sapply(sum) |> unique()
 
 
 ```{r}
-library(spdep)
 
 lw <- nb2listw(pom_queen_nb, style = "W")
 
-moran_test <- moran.test(wpom2$crimes, listw = lw, randomisation = TRUE, alternative = "two.sided")
+moran_test <- moran.test(wpom3$crimes, listw = lw, randomisation = TRUE, alternative = "two.sided")
 print(moran_test)
 
 ```
@@ -507,7 +270,7 @@ Since the p-value (0.2962) is greater than the conventional significance level o
 
 ```{r}
 
-lm_null <- lm(crimes ~ 1, data = wpom2)
+lm_null <- lm(crimes ~ 1, data = wpom3)
 
 moran_test <- moran.test(residuals(lm_null), listw = lw, randomisation = FALSE, alternative = "two.sided")
 
@@ -521,42 +284,9 @@ lm.morantest(lm_null, listw=lw, alternative="two.sided")
 ```
 
 ```{r}
-substring(county_names$TERYT, 1, 2) -> vopom
-county_names |> subset(subset = vopom == "22") -> pom01
-```
-
-```{r}
-borders_get(TERYT = pom0$TERYT) -> wpom
-ID <- as.integer("0012345") 
-str(ID)
-formatC(ID, format="d", width=7, flag="0")
-dim(wpom)
-wpom |> sapply(class) |> str()
-str(wpom$TERYT)
-str(pom01)
-```
-```{r}
-wpom$TERYT <- sub("_", "", wpom$TERYT)
-any(is.na(match(wpom$TERYT, pom01$TERYT)))
-
-
-## ----pl_m3, size="footnotesize"-----------------------------------------------
-wpom |> merge(pom01, by = "TERYT") -> wpom1 
-wpom1
-```
-```{r}
-all <- readxl::read_excel("all_variables.xlsx")
-sapply(all, class)
-names(all)
-wpom1 |> merge(all, by.x = "TERYT",
- by.y = "Code") -> wpom2
-wpom2
-```
-
-```{r}
-form_pre <- wpom2$crimes ~ wpom2$popdens + wpom2$avgsal +
- wpom2$unemp + wpom2$ssusers
-lm_obj_pre <- lm(form_pre, data= wpom2)
+form_pre <- wpom3$crimes ~ wpom3$popdens + wpom3$avgsal +
+ wpom3$unemp + wpom3$ssusers
+lm_obj_pre <- lm(form_pre, data= wpom3)
 moran.test(residuals(lm_obj_pre), listw=lw,
  randomisation=FALSE, alternative="two.sided")
 ```
@@ -584,9 +314,7 @@ summary(SD.RStests(lm_obj_pre, listw=lw, test="SDEM",
  Durbin=update(form_pre, ~ . - Metrop)))
 ```
 ```{r}
-install.packages("spatialreg")
-library(spatialreg)
-SLX_obj <- lmSLX(form_pre, data=wpom2, listw=lw,
+SLX_obj <- lmSLX(form_pre, data=wpom3, listw=lw,
  Durbin=update(form_pre, ~ . - Metrop))
 summary(lm.RStests(SLX_obj, listw=lw, test="all"))
 ```
@@ -596,63 +324,48 @@ summary(lm.RStests(SLX_obj, listw=lw, test="all"))
 library(spdep)
 lwB <- nb2listw(pom_queen_nb, style="B")
 library(spatialreg)
-car1 <- spautolm(form_pre, data=wpom2, listw=lwB, family="CAR")
+car1 <- spautolm(form_pre, data=wpom3, listw=lwB, family="CAR")
 summary(car1, Nagelkerke=TRUE)
 ```
+
 ```{r}
-wpom2$ranef_ml <- car1$fit$signal_stochastic
+wpom3$ranef_ml <- car1$fit$signal_stochastic
 ```
 
 ```{r}
-install.packages("hglm")
-```
-
-```{r}
-library(hglm)
 W <- as(lwB, "CsparseMatrix")
-car2 <- hglm(fixed=form_pre, random= ~ 1|TERYT, data=wpom2, family = gaussian(), rand.family=CAR(D=W))
+car2 <- hglm(fixed=form_pre, random= ~ 1|TERYT, data=wpom3, family = gaussian(), rand.family=CAR(D=W))
 car2
 ```
 ```{r}
-wpom2$ranef_hglm <- c(unname(car2$ranef))
-```
-
-
-```{r}
-install.packages("mgcv")
-library(mgcv)
+wpom3$ranef_hglm <- c(unname(car2$ranef))
 ```
 
 ```{r}
 names(pom_queen_nb) <- attr(pom_queen_nb, "region.id")
-wpom2$TERYT <- factor(wpom2$TERYT)
-car3 <- gam(update(form_pre, . ~ . + s(TERYT, bs="mrf", xt=list(nb=pom_queen_nb))), data=wpom2)
+wpom3$TERYT <- factor(wpom3$TERYT)
+car3 <- gam(update(form_pre, . ~ . + s(TERYT, bs="mrf", xt=list(nb=pom_queen_nb))), data=wpom3)
 summary(car3)
 
 pom_queen_nb
 ```
 ```{r}
-wpom2$ranef_mrf <- unname(predict(car3, type="terms")[, "s(TERYT)"])
+wpom3$ranef_mrf <- unname(predict(car3, type="terms")[, "s(TERYT)"])
 ```
 
 ```{r}
 cbind(ML=coef(car1), HGLM=c(car2$fixef, NA), MRF=c(coef(car3)[1:7], NA))
 ```
 ```{r}
-cor(st_drop_geometry(wpom2)[, c("ranef_ml", "ranef_hglm", "ranef_mrf")])
+cor(st_drop_geometry(wpom3)[, c("ranef_ml", "ranef_hglm", "ranef_mrf")])
 ```
 ```{r}
-install.packages("tmap")
-library(tmap)
-```
-
-```{r}
-tm_shape(wpom2) + tm_fill(c("ranef_ml", "ranef_hglm", "ranef_mrf"), title="random effect", n=9, midpoint=0, style="fisher") + tm_borders() + tm_facets(free.scales=FALSE) + tm_layout(panel.labels=c("ML", "HGLM", "MRF"))
+tm_shape(wpom3) + tm_fill(c("ranef_ml", "ranef_hglm", "ranef_mrf"), title="random effect", n=9, midpoint=0, style="fisher") + tm_borders() + tm_facets(free.scales=FALSE) + tm_layout(panel.labels=c("ML", "HGLM", "MRF"))
 ```
 ##SIMULTANEOUS AUTOREGRESSIVE MODELS
 
 ```{r}
-sar1B <- spautolm(form_pre, data=wpom2, listw=lwB, family="SAR")
+sar1B <- spautolm(form_pre, data=wpom3, listw=lwB, family="SAR")
 summary(sar1B, Nagelkerke=TRUE)
 ```
 ```{r}
@@ -664,11 +377,11 @@ e <- eigenw(lw)
 1/range(e)
 ```
 ```{r}
-sar1 <- spautolm(form_pre, data=wpom2, listw=lw, family="SAR", control=list(pre_eig=e))
+sar1 <- spautolm(form_pre, data=wpom3, listw=lw, family="SAR", control=list(pre_eig=e))
 summary(sar1, Nagelkerke=TRUE)
 ```
 ```{r}
-SEM_pre <- errorsarlm(form_pre, data=wpom2, listw=lw, control=list(pre_eig=e))
+SEM_pre <- errorsarlm(form_pre, data=wpom3, listw=lw, control=list(pre_eig=e))
 summary(SEM_pre, Nagelkerke=TRUE)
 ```
 
