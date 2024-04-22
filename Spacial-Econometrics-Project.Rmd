@@ -98,6 +98,23 @@ wpom1 |> merge(all, by.x = "TERYT",
 wpom2
 ```
 
+```{r}
+wpom2 |> st_area() |>
+ units::set_units("km2") -> wpom2$area_km2
+wpom2 |> st_drop_geometry() |>
+ subset(select = c(poplation, area_km2)) |>
+ apply(1, function(x) x[1]/x[2]) -> wpom2$density
+ wpom2
+```
+
+```{r}
+wpom2 |> st_drop_geometry() |>
+ subset(select = c(crimes, poplation)) |>
+ apply(1, function(x) x[1]/x[2]) -> wpom2$ratecrimes
+ wpom2
+```
+
+
 ### UNEMPLOYMENT RATE
 
 We assume that there is direct proportional relationship between unemployment rate and crimes against propertyt (the higher rate of unemployment, the higher amount of crimes against property).```
@@ -180,7 +197,7 @@ mapsf::mf_map(wpom3, var="avgsal", type="choro", breaks="geom",
 It is assumed that the number of crimes committed is directly proportional to the population density of cities, meaning we expect a greater number of thefts in larger urban areas.
 
 ```{r}
-mapview(wpom3, zcol="popdens")
+mapview(wpom3, zcol="density")
 ```
 
 ```{r}
