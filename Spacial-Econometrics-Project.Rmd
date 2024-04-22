@@ -685,6 +685,22 @@ sar1
 ```{r}
 Hausman.test(SEM_pre)
 ```
+
 ## Spatial econometrics models
+
+```{r}
+library(lmtest)
+library(zoo)
+lrtest(GNM_pre, SAC_pre)
+```
+
+```{r}
+SDEM_pre <- errorsarlm(form_pre, data=wpom2, listw=lw, Durbin=update(form_pre, ~ . - Metrop), control=list(pre_eig=e))
+```
+
+```{r}
+OLS_pre <- lm(form_pre, data=wpom2)
+```
+
 
 
