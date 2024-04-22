@@ -201,26 +201,26 @@ mapview(wpom3, zcol="density")
 ```
 
 ```{r}
-plot(density(wpom3$popdens))
+plot(density(wpom3$density))
 ```
 
 ```{r}
-mapsf::mf_map(wpom3, var="popdens", type="choro", breaks="geom",
+mapsf::mf_map(wpom3, var="density", type="choro", breaks="geom",
               nbreaks=7)
 ```
 
 ### CRIMES
 
 ```{r}
-mapview(wpom3, zcol="crimes")
+mapview(wpom3, zcol="ratecrimes")
 ```
 
 ```{r}
-plot(density(wpom3$crimes))
+plot(density(wpom3$ratecrimes))
 ```
 
 ```{r}
-mapsf::mf_map(wpom3, var="crimes", type="choro", breaks="geom",
+mapsf::mf_map(wpom3, var="ratecrimes", type="choro", breaks="geom",
  nbreaks=7)
 ```
 
@@ -272,7 +272,7 @@ pom_queen_lw$weights |> sapply(sum) |> unique()
 
 lw <- nb2listw(pom_queen_nb, style = "W")
 
-moran_test <- moran.test(wpom3$crimes, listw = lw, randomisation = TRUE, alternative = "two.sided")
+moran_test <- moran.test(wpom3$ratecrimes, listw = lw, randomisation = TRUE, alternative = "two.sided")
 print(moran_test)
 
 ```
@@ -286,7 +286,7 @@ Since the p-value (0.2962) is greater than the conventional significance level o
 
 ```{r}
 
-lm_null <- lm(crimes ~ 1, data = wpom3)
+lm_null <- lm(ratecrimes ~ 1, data = wpom3)
 
 moran_test <- moran.test(residuals(lm_null), listw = lw, randomisation = FALSE, alternative = "two.sided")
 
@@ -300,8 +300,8 @@ lm.morantest(lm_null, listw=lw, alternative="two.sided")
 ```
 
 ```{r}
-form_pre <- wpom3$crimes ~ wpom3$popdens + wpom3$avgsal +
- wpom3$unemp + wpom3$ssusers
+form_pre <- ratecrimes ~ log(density) + avgsal +
+ unemp + ssusers
 lm_obj_pre <- lm(form_pre, data= wpom3)
 moran.test(residuals(lm_obj_pre), listw=lw,
  randomisation=FALSE, alternative="two.sided")
@@ -346,8 +346,8 @@ wpom3$ranef_ml <- car1$fit$signal_stochastic
 ```
 
 ```{r}
-W <- as(lwB, "CsparseMatrix")
-car2 <- hglm(fixed=form_pre, random= ~ 1|TERYT, data=wpom3, family = gaussian(), rand.family=CAR(D=W))
+w <- as(lwB, "CsparseMatrix")
+car2 <- hglm(fixed=form_pre, random= ~ 1|TERYT, data=wpom3, family = gaussian(), rand.family=CAR(D = w))
 car2
 ```
 ```{r}
@@ -359,8 +359,6 @@ names(pom_queen_nb) <- attr(pom_queen_nb, "region.id")
 wpom3$TERYT <- factor(wpom3$TERYT)
 car3 <- gam(update(form_pre, . ~ . + s(TERYT, bs="mrf", xt=list(nb=pom_queen_nb))), data=wpom3)
 summary(car3)
-
-pom_queen_nb
 ```
 ```{r}
 wpom3$ranef_mrf <- unname(predict(car3, type="terms")[, "s(TERYT)"])
@@ -411,15 +409,14 @@ Hausman.test(SEM_pre)
 ```{r}
 library(lmtest)
 library(zoo)
-lrtest(GNM_pre, SAC_pre)
 ```
 
 ```{r}
-SDEM_pre <- errorsarlm(form_pre, data=wpom2, listw=lw, Durbin=update(form_pre, ~ . - Metrop), control=list(pre_eig=e))
+SDEM_pre <- errorsarlm(form_pre, data=wpom3, listw=lw, control=list(pre_eig=e))
 ```
 
 ```{r}
-OLS_pre <- lm(form_pre, data=wpom2)
+OLS_pre <- lm(form_pre, data=wpom3)
 ```
 
 
