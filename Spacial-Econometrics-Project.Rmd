@@ -70,7 +70,7 @@ county_names |> subset(subset = vopom == "22") -> pom01
 ```
 
 ```{r}
-borders_get(TERYT = pom0$TERYT) -> wpom
+borders_get(TERYT = pom01$TERYT) -> wpom
 ID <- as.integer("0012345") 
 str(ID)
 formatC(ID, format="d", width=7, flag="0")
@@ -81,11 +81,10 @@ str(pom01)
 ```
 
 ```{r}
-wpom$TERYT <- sub("_", "", wpom$TERYT)
 any(is.na(match(wpom$TERYT, pom01$TERYT)))
+```
 
-
-## ----pl_m3, size="footnotesize"-----------------------------------------------
+```{r}
 wpom |> merge(pom01, by = "TERYT") -> wpom1 
 wpom1
 ```
@@ -306,16 +305,13 @@ lm.morantest.exact(lm_obj_pre, listw=lw, alternative="two.sided")
 summary(lm.RStests(lm_obj_pre, listw=lw, test="all"))
 ```
 ```{r}
-summary(SD.RStests(lm_obj_pre, listw=lw, test="SDM",
- Durbin=update(form_pre, ~ . - Metrop)))
+summary(SD.RStests(lm_obj_pre, listw=lw, test="SDM"))
 ```
 ```{r}
-summary(SD.RStests(lm_obj_pre, listw=lw, test="SDEM",
- Durbin=update(form_pre, ~ . - Metrop)))
+summary(SD.RStests(lm_obj_pre, listw=lw, test="SDEM"))
 ```
 ```{r}
-SLX_obj <- lmSLX(form_pre, data=wpom3, listw=lw,
- Durbin=update(form_pre, ~ . - Metrop))
+SLX_obj <- lmSLX(form_pre, data=wpom3, listw=lw)
 summary(lm.RStests(SLX_obj, listw=lw, test="all"))
 ```
 ## CAR AND SAR
@@ -354,7 +350,7 @@ wpom3$ranef_mrf <- unname(predict(car3, type="terms")[, "s(TERYT)"])
 ```
 
 ```{r}
-cbind(ML=coef(car1), HGLM=c(car2$fixef, NA), MRF=c(coef(car3)[1:7], NA))
+cbind(ML=coef(car1)[1:5], HGLM=car2$fixef[1:5], MRF=coef(car3)[1:5])
 ```
 ```{r}
 cor(st_drop_geometry(wpom3)[, c("ranef_ml", "ranef_hglm", "ranef_mrf")])
@@ -386,13 +382,7 @@ summary(SEM_pre, Nagelkerke=TRUE)
 ```
 
 ```{r}
-all.equal(coef(SEM_pre)[c(2:8, 1)], coef(sar1), tol=2e-07)
-
-SEM_pre
-```
-
-```{r}
-sar1
+all.equal(coef(SEM_pre)[c(2:6, 1)], coef(sar1), tol=2e-07)
 ```
 
 ```{r}
