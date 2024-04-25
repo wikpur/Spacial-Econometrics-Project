@@ -220,7 +220,7 @@ mapsf::mf_map(wpom3, var="density", type="choro", breaks="geom",
 ### CRIMES
 
 ```{r}
-mapview(wpom3, zcol="ratecrimes")
+mapview(wpom3, zcol="crimesrate")
 ```
 
 ```{r}
@@ -228,9 +228,13 @@ plot(density(wpom3$ratecrimes))
 ```
 
 ```{r}
-mapsf::mf_map(wpom3, var="ratecrimes", type="choro", breaks="geom",
+mapsf::mf_map(wpom3, var="crimesrate", type="choro", breaks="geom",
  nbreaks=7)
 ```
+```{r}
+cor(model.matrix(~ -1 + crimesrate + density + avgsal + unemp + ssusers,wpom3))
+```
+
 
 ```{r}
 (wpom3 |> poly2nb(queen=FALSE,
@@ -308,85 +312,40 @@ lm.morantest(lm_null, listw=lw, alternative="two.sided")
 ```
 
 ```{r}
-form_pre <- ratecrimes ~ log(density) + avgsal +
- unemp + ssusers
-lm_obj_pre <- lm(form_pre, data= wpom3)
-moran.test(residuals(lm_obj_pre), listw=lw,
+form_pom <- crimesrate ~ density + avgsal + unemp + ssusers
+lm_obj <- lm(form_pom, data= wpom3)
+moran.test(residuals(lm_obj), listw=lw,
  randomisation=FALSE, alternative="two.sided")
 ```
 ```{r}
-lm.morantest(lm_obj_pre, listw=lw, alternative="two.sided")
+lm.morantest(lm_obj, listw=lw, alternative="two.sided")
 ```
 ```{r}
-lm.morantest.sad(lm_obj_pre, listw=lw, alternative="two.sided")
+lm.morantest.sad(lm_obj, listw=lw, alternative="two.sided")
 ```
 
 ```{r}
-lm.morantest.exact(lm_obj_pre, listw=lw, alternative="two.sided")
+lm.morantest.exact(lm_obj, listw=lw, alternative="two.sided")
 ```
 ## RAO'S SCORE
 
 ```{r}
-summary(lm.RStests(lm_obj_pre, listw=lw, test="all"))
+summary(lm.RStests(lm_obj, listw=lw, test="all"))
 ```
 ```{r}
-summary(SD.RStests(lm_obj_pre, listw=lw, test="SDM"))
+summary(SD.RStests(lm_obj, listw=lw, test="SDM"))
 ```
 ```{r}
-summary(SD.RStests(lm_obj_pre, listw=lw, test="SDEM"))
+summary(SD.RStests(lm_obj, listw=lw, test="SDEM"))
 ```
 ```{r}
-SLX_obj <- lmSLX(form_pre, data=wpom3, listw=lw)
+SLX_obj <- lmSLX(form_pom, data=wpom3, listw=lw)
 summary(lm.RStests(SLX_obj, listw=lw, test="all"))
-```
-
-## CAR AND SAR
-
-```{r}
-library(spdep)
-lwB <- nb2listw(pom_queen_nb, style="B")
-library(spatialreg)
-car1 <- spautolm(form_pre, data=wpom3, listw=lwB, family="CAR")
-summary(car1, Nagelkerke=TRUE)
-```
-
-```{r}
-wpom3$ranef_ml <- car1$fit$signal_stochastic
-```
-
-```{r}
-w <- as(lwB, "CsparseMatrix")
-car2 <- hglm(fixed=form_pre, random= ~ 1|TERYT, data=wpom3, family = gaussian(), rand.family=CAR(D = w))
-car2
-```
-
-```{r}
-wpom3$ranef_hglm <- c(unname(car2$ranef))
-```
-
-```{r}
-names(pom_queen_nb) <- attr(pom_queen_nb, "region.id")
-wpom3$TERYT <- factor(wpom3$TERYT)
-car3 <- gam(update(form_pre, . ~ . + s(TERYT, bs="mrf", xt=list(nb=pom_queen_nb))), data=wpom3)
-summary(car3)
-```
-```{r}
-wpom3$ranef_mrf <- unname(predict(car3, type="terms")[, "s(TERYT)"])
-```
-
-```{r}
-cbind(ML=coef(car1)[1:5], HGLM=car2$fixef[1:5], MRF=coef(car3)[1:5])
-```
-```{r}
-cor(st_drop_geometry(wpom3)[, c("ranef_ml", "ranef_hglm", "ranef_mrf")])
-```
-```{r}
-tm_shape(wpom3) + tm_fill(c("ranef_ml", "ranef_hglm", "ranef_mrf"), title="random effect", n=9, midpoint=0, style="fisher") + tm_borders() + tm_facets(free.scales=FALSE) + tm_layout(panel.labels=c("ML", "HGLM", "MRF"))
 ```
 ##SIMULTANEOUS AUTOREGRESSIVE MODELS
 
 ```{r}
-sar1B <- spautolm(form_pre, data=wpom3, listw=lwB, family="SAR")
+sar1B <- spautolm(form_pom, data=wpom3, listw=lwB, family="SAR")
 summary(sar1B, Nagelkerke=TRUE)
 ```
 ```{r}
@@ -398,141 +357,25 @@ e <- eigenw(lw)
 1/range(e)
 ```
 ```{r}
-sar1 <- spautolm(form_pre, data=wpom3, listw=lw, family="SAR", control=list(pre_eig=e))
+sar1 <- spautolm(form_pom, data=wpom3, listw=lw, family="SAR", control=list(pre_eig=e))
 summary(sar1, Nagelkerke=TRUE)
 ```
 ```{r}
-SEM_pre <- errorsarlm(form_pre, data=wpom3, listw=lw, control=list(pre_eig=e))
-summary(SEM_pre, Nagelkerke=TRUE)
+SEM <- errorsarlm(form_pom, data=wpom3, listw=lw, control=list(pre_eig=e))
+summary(SEM, Nagelkerke=TRUE)
 ```
 
 ```{r}
-all.equal(coef(SEM_pre)[c(2:6, 1)], coef(sar1), tol=2e-07)
+all.equal(coef(SEM)[c(2:6, 1)], coef(sar1), tol=2e-07)
 ```
 
 ```{r}
-Hausman.test(SEM_pre)
+Hausman.test(SEM)
 ```
-```{r}
-GNM_pre <- sacsarlm(form_pre, data=wpom3, listw=lw,control=list(pre_eig1=e, pre_eig2=e))
-SAC_pre <- sacsarlm(form_pre, data=wpom3, listw=lw, control=list(pre_eig1=e, pre_eig2=e))
-```
+## Estimation of spatial autoregressive models
 
 ```{r}
-lrtest(GNM_pre, SAC_pre)
-```
-```{r}
-SDEM_pre <- errorsarlm(form_pre, data=wpom3, listw=lw, control=list(pre_eig=e))
-Hausman.test(SDEM_pre)
-```
-```{r}
-SDM_pre <- lagsarlm(form_pre, data=wpom3, listw=lw, control=list(pre_eig=e))
-```
 
-```{r}
-c(LM_test=signif(SDM_pre$LMtest), p.value=format.pval((1 - pchisq(SDM_pre$LMtest, 1))))
 ```
-```{r}
-SLM_pre <- lagsarlm(form_pre, data=wpom3, listw=lw, control=list(pre_eig=e))
-c(LM_test=signif(SLM_pre$LMtest), p.value=format.pval((1 - pchisq(SLM_pre$LMtest, 1))))
-SLX_pre <- lmSLX(form_pre, data=wpom3, listw=lw)
-OLS_pre <- lm(form_pre, data=wpom3)
-```
-```{r}
-mlist_pre <- list(GNM=GNM_pre, SAC=SAC_pre, SDEM=SDEM_pre, SDM=SDM_pre, SLX=SLX_pre, SEM=SEM_pre, SLM=SLM_pre, OLS=OLS_pre)
-m <- length(mlist_pre)
-LR_pre <- matrix(NA, ncol=m, nrow=m)
-colnames(LR_pre) <- rownames(LR_pre) <- names(mlist_pre)
-for (j in 2:m) LR_pre[1, j] <- lrtest(mlist_pre[[1]],
-    mlist_pre[[j]])[[2, "Pr(>Chisq)"]]
-for (j in 6:8) LR_pre[2, j] <- lrtest(mlist_pre[[2]],
-    mlist_pre[[j]])[[2, "Pr(>Chisq)"]]
-for (j in c(5, 6, 8)) LR_pre[3, j] <- lrtest(mlist_pre[[3]],
-    mlist_pre[[j]])[[2, "Pr(>Chisq)"]]
-for (j in c(5:8)) LR_pre[4, j] <- lrtest(mlist_pre[[4]],
-    mlist_pre[[j]])[[2, "Pr(>Chisq)"]]
-for (i in 5:7) LR_pre[i, 8] <- lrtest(mlist_pre[[i]],
-    mlist_pre[[8]])[[2, "Pr(>Chisq)"]]
-```
-```{r}
-#| label: LR3_pre
-#| fig-cap: Heat map of likelihood ratio p-values, pre_CCT models
-opar <- par(mar=c(3.1, 3.1, 3.1, 7.1), cex.axis=0.8)
-plot(LR_pre, breaks=c(0, 10^-(8:0)), col=viridis, las=1)
-par(opar)
-```
-```{r}
-sort(sapply(mlist_pre, AIC))
-sort(sapply(mlist_pre, BIC))
-```
-```{r}
-SEM_post <- errorsarlm(form_pre, data=wpom3, listw=lw, control=list(pre_eig=e))
-Hausman.test(SEM_post)
-```
-```{r}
-GNM_post <- sacsarlm(form_pre, data=wpom3, listw=lw,control=list(pre_eig1=e, pre_eig2=e))
-SAC_post <- sacsarlm(form_pre, data=wpom3, listw=lw, control=list(pre_eig1=e, pre_eig2=e))
-SDEM_post <- errorsarlm(form_pre, data=wpom3, listw=lw, control=list(pre_eig=e))
-Hausman.test(SDEM_post)
-```
-```{r}
-SDM_post <- lagsarlm(form_pre, data=wpom3, listw=lw, control=list(pre_eig=e))
-
-c(LM_test=signif(SDM_post$LMtest), p.value=format.pval((1 - pchisq(SDM_post$LMtest, 1))))
-
-SLM_post <- lagsarlm(form_pre, data=wpom3, listw=lw, control=list(pre_eig=e))
-
-c(LM_test=signif(SLM_post$LMtest), p.value=format.pval((1 - pchisq(SLM_post$LMtest, 1))))
-
-SLX_post <- lmSLX(form_pre, data=wpom3, listw=lw)
-
-OLS_post <- lm(form_pre, data=wpom3)
-```
-```{r}
-mlist_post <- list(GNM=GNM_post, SAC=SAC_post, SDEM=SDEM_post, SDM=SDM_post, SLX=SLX_post, SEM=SEM_post, SLM=SLM_post, OLS=OLS_post)
-m <- length(mlist_post)
-LR_post <- matrix(NA, ncol=m, nrow=m)
-colnames(LR_post) <- rownames(LR_post) <- names(mlist_post)
-for (j in 2:m) LR_post[1, j] <- lrtest(mlist_post[[1]],
-    mlist_post[[j]])[[2, "Pr(>Chisq)"]]
-for (j in 6:8) LR_post[2, j] <- lrtest(mlist_post[[2]],
-    mlist_post[[j]])[[2, "Pr(>Chisq)"]]
-for (j in c(5, 6, 8)) LR_post[3, j] <- lrtest(mlist_post[[3]],
-    mlist_post[[j]])[[2, "Pr(>Chisq)"]]
-for (j in c(5:8)) LR_post[4, j] <- lrtest(mlist_post[[4]],
-    mlist_post[[j]])[[2, "Pr(>Chisq)"]]
-for (i in 5:7) LR_post[i, 8] <- lrtest(mlist_post[[i]],
-    mlist_post[[8]])[[2, "Pr(>Chisq)"]]
-```
-```{r}
-#| label: LR3_post
-#| fig-cap: Heat map of likelihood ratio p-values, post_CCT models
-opar <- par(mar=c(3.1, 3.1, 3.1, 7.1), cex.axis=0.8)
-plot(LR_post, breaks=c(0, 10^-(8:0)), col=viridis, las=1)
-par(opar)
-
-sort(sapply(mlist_post, AIC))
-
-sort(sapply(mlist_post, BIC))
-```
-
-
-
-
-## Spatial econometrics models
-
-```{r}
-library(lmtest)
-library(zoo)
-```
-
-```{r}
-SDEM_pre <- errorsarlm(form_pre, data=wpom3, listw=lw, control=list(pre_eig=e))
-```
-
-```{r}
-OLS_pre <- lm(form_pre, data=wpom3)
-```
-
 
 
