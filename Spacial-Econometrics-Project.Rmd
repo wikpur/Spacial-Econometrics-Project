@@ -55,6 +55,7 @@ install.packages("spdep")
 install.packages("spatialreg")
 install.packages("grid")
 install.packages("tinyplot", repos = "https://grantmcdermott.r-universe.dev")
+install.packages("RSpectra")
 ```
 
 ```{r}
@@ -78,6 +79,7 @@ library(spdep)
 library(spatialreg)
 library(tinyplot)
 library(grid)
+library(RSpectra)
 ```
 ### CREATING THE DATABASE 
 
@@ -354,11 +356,11 @@ summary(lm.RStests(SLX_obj, listw=lw, test="all"))
 ##SIMULTANEOUS AUTOREGRESSIVE MODELS
 
 ```{r}
-sar1B <- spautolm(form_pom, data=wpom3, listw=lwB, family="SAR")
+sar1B <- spautolm(form_pom, data=wpom3, listw=lw, family="SAR")
 summary(sar1B, Nagelkerke=TRUE)
 ```
 ```{r}
-1/range(eigenw(lwB))
+1/range(eigenw(lw))
 ```
 ```{r}
 lw <- nb2listw(pom_queen_nb, style="W")
@@ -494,4 +496,129 @@ head(sort(page_rank(g1)$vector, decreasing=TRUE))
 ```{r}
 head(sort(eigen_centrality(g1)$vector, decreasing=TRUE))
 ```
+### Eigenvalue approach
+
+```{r}
+eB <- eigenw(lwB)
+eW <- eigenw(similar.listw(lwW))
+cat("Class:", class(eB), "min:", 1/min(eB), "max:", 1/max(eB), "\n")
+??eigen
+```
+
+```{r}
+eigW <- eigenw(similar.listw(lwW))
+cat("Class:", class(eW), "min:", 1/min(eW), "max:", 1/max(eW), "\n")
+```
+
+```{r}
+oopar <- par(mfrow=c(1,2), mar=c(4,2,4,2))
+rhoB <- seq(1/min(eB), 1/max(eB), length.out=500)
+plot(rhoB, sapply(rhoB, function(rho) sum(log(1 - rho*eB))), type="l", xlab=expression(rho), ylab="", main="Binary weights")
+abline(v=1/range(eB), lty=2, lwd=2, col="#EB811B")
+abline(h=0, v=0, lty=2, col="grey")
+legend("bottomright", bty="n", legend=c(expression(plain(ln) * group("|", bold(I) - rho * bold(W), "|")), "extreme eigenvalues"), lty=c(1, 2), lwd=c(1, 2), col=c("black", "#EB811B"), cex=0.8)
+rhoW <- seq(1/min(eW), 1/max(eW), length.out=500)
+plot(rhoW, sapply(rhoW, function(rho) sum(log(1 - rho*eW))), type="l", xlab=expression(rho), ylab="", main="Row-standardised weights")
+abline(v=1/range(eW), lty=2, lwd=2, col="#EB811B")
+abline(h=0, v=0, lty=2, col="grey")
+```
+
+```{r}
+par(oopar)
+```
+
+### APLE
+
+```{r}
+c(crossprod(eigW))
+```
+ 
+```{r}
+W <- as(lwW, "CsparseMatrix")
+sum(diag(W %*% W))
+```
+ 
+```{r}
+var <- scale((wpom3$crimesrate), scale=FALSE)[,1]
+set.seed(1)
+aple.mc(var, lwW, nsim=999)
+```
+ 
+12.4 Moran eigenvectors - spatial filtering
+ 
+```{r}
+x <- (wpom3$crimesrate)
+moran.test(x, lwW)$estimate
+```
+ 
+```{r}
+n <- nrow(wpom3)
+M <- diag(n) - (tcrossprod(rep(1, n)))/n
+MCM <- M %*% W %*% M
+c((n/sum(W)) * crossprod(x, MCM %*% x)/crossprod(x, M %*% x))
+```
+ 
+```{r}
+SF_pom <- SpatialFiltering(form_pom, data=wpom3, nb=pom_queen_nb, style="W", alpha=0.33, ExactEV = TRUE)
+SF_pom
+```
+ 
+```{r}
+SF_pom_lm <- lm(update(form_pom, . ~ . + fitted(SF_pom)), data=wpom3)
+spdep::lm.morantest(SF_pom_lm, lwW)
+```
+ 
+### Extreme eigenvalues
+ 
+```{r}
+ecount(g1) <= 3*vcount(g1) - 6
+```
+ 
+```{r}
+1/range(eB)
+```
+ 
+```{r}
+rB <- lextrB(lwB)
+1/c(rB)
+```
+ 
+ 
+```{r}
+1/range(eW)
+```
+ 
+```{r}
+rW <- lextrW(lwW)
+1/c(rW)
+```
+ 
+### Alternatives
+ 
+```{r}
+B <- as(as(B0, "symmetricMatrix"), "unpackedMatrix")
+arB <- eigs(B, 2, which = "BE")
+1/rev(arB$values)
+```
+ 
+```{r}
+W <- as(as(similar.listw(lwW), "CsparseMatrix"), "symmetricMatrix")
+arW <- eigs(W, 2, which = "BE")
+1/rev(arW$values)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
