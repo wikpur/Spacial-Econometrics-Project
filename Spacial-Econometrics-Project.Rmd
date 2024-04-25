@@ -340,11 +340,6 @@ SLX_obj <- lmSLX(form_pre, data=wpom3, listw=lw)
 summary(lm.RStests(SLX_obj, listw=lw, test="all"))
 ```
 
-```{r}
-form_post <- update(form_pre, log(realNetPst) ~ . - log(realWgPre) + log(realWgPst))
-```
-
-
 ## CAR AND SAR
 
 ```{r}
