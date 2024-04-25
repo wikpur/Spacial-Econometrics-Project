@@ -50,10 +50,14 @@ install.packages("lmtest")
 install.packages("zoo")
 install.packages("plot.matrix")
 install.packages("viridis")
+install.packages("sphet")
+install.packages("spdep")
+install.packages("spatialreg")
+install.packages("grid")
+install.packages("tinyplot", repos = "https://grantmcdermott.r-universe.dev")
 ```
 
 ```{r}
-Sys.setenv("PROJ_NETWORK"="ON")
 library(rgugik)
 library(sf)
 library(bdl)
@@ -69,6 +73,11 @@ library(lmtest)
 library(zoo)
 library(plot.matrix)
 library(viridis)
+library(sphet)
+library(spdep)
+library(spatialreg)
+library(tinyplot)
+library(grid)
 ```
 ### CREATING THE DATABASE 
 
@@ -375,7 +384,114 @@ Hausman.test(SEM)
 ## Estimation of spatial autoregressive models
 
 ```{r}
-
+lw <- nb2listw(pom_queen_nb, style="W")
+e <- eigenw(lw)
 ```
 
+
+### Maximum likelihood estimation
+
+```{r}
+SEM <- errorsarlm(form_pom, data=wpom3, listw=lw, control=list(pre_eig=e), quiet=FALSE)
+```
+ 
+ 
+```{r}
+SAC <- sacsarlm(form_pom, data=wpom3, listw=lw, control=list(pre_eig1=e, pre_eig2=e), llprof=40)
+SAC_track <- capture.output(sac <- sacsarlm(form_pom, data=wpom3, listw=lw, control=list(pre_eig1=e, pre_eig2=e), quiet=FALSE))
+c(SAC$rho, SAC$lambda)
+c(SAC$rho/SAC$rho.se, SAC$lambda/SAC$lambda.se)
+```
+ 
+```{r}
+m <- -matrix(SAC$llprof$ll, 40, 40)
+con <- textConnection(SAC_track)
+sac_track <- read.table(con, skip=14)
+close(con)
+contour(SAC$llprof$xseq, SAC$llprof$yseq, m, levels=quantile(c(m), seq(0,1,0.1)), xlab="rho", ylab="lambda", col="blue4")
+abline(h=SAC$rho, v=SAC$lambda, lwd=3, col="grey")
+lines(sac_track$V2, sac_track$V4, col="brown3")
+```
+
+### Bayesian estimation
+
+```{r}
+set.seed(12345)
+SAC_bayes <- spBreg_sac(form_pom, data=wpom3, listw=lw, control=list(ndraw=20000L, nomit=2000L))
+```
+
+```{r}
+summary(SAC_bayes[, c("rho", "lambda", "sige")])
+```
+
+```{r}
+opar <- par(mfrow=c(2, 1)) 
+plot(SAC_bayes[, c("rho", "lambda", "sige")], smooth=TRUE)
+```
+
+### Generalised method of moments estimation
+
+```{r}
+SAC <- spreg(form_pom, data=wpom3, listw=lw, model="sarar")
+c(coef(SAC)[c("lambda", "rho"),], s2=as.numeric(SAC$s2))
+```
+
+## Trace-style impacts
+
+```{r}
+lw <- nb2listw(pom_queen_nb, style="W")
+e <- eigenw(lw)
+W <- as(lw, "CsparseMatrix")
+trMat <- trW(W, type="mult")
+```
+
+```{r}
+SLM <- lagsarlm(form_pom, data=wpom3, listw=lw, control=list(pre_eig=e))
+```
+
+## Eigenvectors and eigenvalues of graphs of relationships between cross-sectional observations
+
+```{r}
+lwB <- nb2listw(pom_queen_nb, style="B")
+lwW <- nb2listw(pom_queen_nb, style="W")
+```
+
+```{r}
+B0 <- as(lwB, "symmetricMatrix")
+library(igraph)
+```
+```{r}
+g1 <- graph_from_adjacency_matrix(B0, mode="undirected")
+c1 <- components(g1)
+str(c1)
+```
+```{r}
+str(n.comp.nb(pom_queen_nb))
+```
+```{r}
+is_connected(g1)
+```
+```{r}
+diameter(g1)
+```
+```{r}
+str(g1d <- distances(g1))
+```
+```{r}
+summary(c(g1d))
+```
+```{r}
+head(sort(degree(g1), decreasing=TRUE))
+```
+```{r}
+cunb <- card(pom_queen_nb)
+names(cunb) <- attr(pom_queen_nb, "region.id")
+head(sort(cunb, decreasing=TRUE))
+```
+```{r}
+head(sort(page_rank(g1)$vector, decreasing=TRUE))
+```
+```{r}
+head(sort(eigen_centrality(g1)$vector, decreasing=TRUE))
+```
 
