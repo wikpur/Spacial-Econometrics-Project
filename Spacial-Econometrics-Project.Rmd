@@ -1,11 +1,13 @@
 ---
-title: ""
+
+title: "Spatial trends in crime rates across pomeranian counties in 2018"
 date: "`r Sys.Date()`"
 output:
   rmdformats::downcute:
     self_contained: true
     default_style: "light"
     downcute_theme: "default"
+    bibliography: bibliography.bib 
 ---
 
 ```{r setup, include=FALSE}
@@ -18,7 +20,7 @@ knitr::opts_chunk$set(cache = TRUE)
 
 ## INTRODUCTION
 
-The study aims to analyze spatial trends in property crimes, in Poland in regards to the Pomeranian voivodeship and it’s counties. Further examination explores how socio-economic factors---like unemployment rate, social services, average gross monthly salary, population density and international migrations --- affect crime rates, considering geographic contexts. The study takes data from 2018.
+The study aims to analyze spatial trends in property crimes, in Poland in regards to the Pomeranian voivodeship and it’s counties. Further examination explores how socio-economic factors---like unemployment rate, social services, average gross monthly salary, population density --- affect crime rates, considering geographic contexts. The study takes data from 2018.
 
 ## I. DATA DESCRIPTION
 
@@ -29,6 +31,8 @@ The database comprises data on the number of ascertained crimes in 2018 across P
 The database contain only the crimes committed by an adult.
 
 [Note:]{.underline} Polish law indicates that theft with a value not exceeding 500 PLN is considered a misdemeanor, not a crime. Reporting such theft will not be considered or processed, so there is no point in reporting them. Such a situation causes a disturbance between the actual amount of thefts and the recorded ones, since people has no incentive to report a theft under 500 PLN. This aspect was taken into consideration during the examination.
+
+We created a variable "crimesrate" by examining the shares of particular county in the general sum of crimes in the pomeranian voivodeship making it as a rate. 
 
 ## II. DATA VISUALIZATION
 
@@ -56,6 +60,8 @@ install.packages("spatialreg")
 install.packages("grid")
 install.packages("tinyplot", repos = "https://grantmcdermott.r-universe.dev")
 install.packages("RSpectra")
+install.packages("igraph")
+
 ```
 
 ```{r}
@@ -80,6 +86,8 @@ library(spatialreg)
 library(tinyplot)
 library(grid)
 library(RSpectra)
+library(igraph)
+library(knitcitations)
 ```
 ### CREATING THE DATABASE 
 
@@ -125,14 +133,6 @@ wpom2 |> st_drop_geometry() |>
  apply(1, function(x) x[1]/x[2]) -> wpom2$density
  wpom2
 ```
-
-```{r}
-wpom2 |> st_drop_geometry() |>
- subset(select = c(crimes, poplation)) |>
- apply(1, function(x) x[1]/x[2]) -> wpom2$ratecrimes
- wpom2
-```
-
 
 ### UNEMPLOYMENT RATE
 
@@ -288,8 +288,15 @@ summary(pom_queen_lw)
 pom_queen_lw$weights |> sapply(sum) |> unique()
 ```
 
-## TEST OF SPACIAL AUTOCORRELATION
+## Regression Model
 
+```{r}
+model <- lm(crimesrate ~ density + avgsal + unemp + ssusers, data = wpom3)
+summary(model)
+coefficients(model)
+residuals(model)
+```
+## TEST OF SPACIAL AUTOCORRELATION
 
 ```{r}
 
@@ -460,7 +467,6 @@ lwW <- nb2listw(pom_queen_nb, style="W")
 
 ```{r}
 B0 <- as(lwB, "symmetricMatrix")
-library(igraph)
 ```
 ```{r}
 g1 <- graph_from_adjacency_matrix(B0, mode="undirected")
@@ -544,7 +550,7 @@ set.seed(1)
 aple.mc(var, lwW, nsim=999)
 ```
  
-12.4 Moran eigenvectors - spatial filtering
+## Moran eigenvectors - spatial filtering
  
 ```{r}
 x <- (wpom3$crimesrate)
@@ -606,10 +612,6 @@ W <- as(as(similar.listw(lwW), "CsparseMatrix"), "symmetricMatrix")
 arW <- eigs(W, 2, which = "BE")
 1/rev(arW$values)
 ```
-
-
-
-
 
 
 
