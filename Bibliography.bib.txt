@@ -1,0 +1,17 @@
+@Manual{GUS,
+  title = {Dane Powiatowe},
+  author = {{Urząd Statystyczny w Gdańsku}},
+  address = {Gdańsk},
+  year = {2018},
+  url = {https://gdansk.stat.gov.pl/dane-o-wojewodztwie/powiaty-1013/},
+}
+
+@Article{Ceccato,
+  title = {Crime and space},
+  author = {{Vania Ceccato}},
+  organization = {The Swedish Society for Anthrophology and Geography},
+  address = {Sweden},
+  year = {2008},
+  url = {https://www.researchgate.net/publication/289121090_Crime_and_space},
+}
+
