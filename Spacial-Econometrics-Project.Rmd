@@ -371,13 +371,20 @@ moran.test(residuals(lm_obj), listw=lw,
 ```{r}
 lm.morantest(lm_obj, listw=lw, alternative="two.sided")
 ```
+
+These results suggest that there is evidence of spatial autocorrelation in the residuals of the regression model under the assumption of normality at the specified level of significance. The p-value of 0.0351 is less than the common significance level of 0.05, indicating that we reject the null hypothesis of spatial randomness in favor of the alternative hypothesis of spatial autocorrelation. The negative Moran's I statistic suggests a negative spatial autocorrelation, indicating that neighboring regions tend to have dissimilar residuals. Therefore, the spatial structure should be considered in the regression analysis to account for the spatial autocorrelation in the residuals.
+
+
+
+
+
 ```{r}
 lm.morantest.sad(lm_obj, listw=lw, alternative="two.sided")
 ```
+The p-value of 0.04643 suggests that there is evidence to reject the null hypothesis of spatial randomness in favor of the alternative hypothesis of spatial autocorrelation at the significance level of 0.05. This indicates that there may be significant spatial clustering or dispersion in the residuals of the regression model.
+The observed Moran's I statistic provides a measure of the spatial autocorrelation in the residuals, indicating whether neighboring regions tend to have similar or dissimilar residuals. In this case, the negative Moran's I statistic suggests a negative spatial autocorrelation, implying that neighboring regions tend to have dissimilar residuals.
 
-```{r}
-lm.morantest.exact(lm_obj, listw=lw, alternative="two.sided")
-```
+
 ## RAO'S SCORE
 
 ```{r}
