@@ -106,6 +106,8 @@ wpom |> sapply(class) |> str()
 str(wpom$TERYT)
 str(pom01)
 ```
+First, to collect the spatial data and extract boarders across pomeranian voivodeship, we are using rgugik package that include open data from resources of Polish Head Office of Geodesy and Cartography.
+
 
 ```{r}
 any(is.na(match(wpom$TERYT, pom01$TERYT)))
