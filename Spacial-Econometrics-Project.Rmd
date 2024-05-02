@@ -414,10 +414,17 @@ In summary, the diagnostics indicate the presence of spatial autocorrelation in 
 
 ##SIMULTANEOUS AUTOREGRESSIVE MODELS
 
+In this step we are analysing spatial dependence using SAR - The Spatial Autoregressive Model
+
 ```{r}
 sar1B <- spautolm(form_pom, data=wpom3, listw=lw, family="SAR")
 summary(sar1B, Nagelkerke=TRUE)
 ```
+The coefficients of the independent variables avgsal and ssusers are statistically significant at the 0.05 level, suggesting that they have a significant impact on the dependent variable crimesrate. However, the coefficients of density, unemp, and the intercept are not statistically significant. The model has a relatively high Nagelkerke pseudo-R-squared value of 0.71077, indicating a good overall fit. Thus, while some variables appear to influence crime rates in the Pomeranian Voivodeship, there are spatial factors that also play a significant role, highlighting the importance of considering spatial autocorrelation in the analysis of crime rates
+
+Lambda in the SAR model represents the spatial autocorrelation parameter.Lambda has a value of -1.0592, suggesting a negative spatial autocorrelation. This means that areas with higher crime rates are associated with lower crime rates in neighboring areas, and vice versa. The negative value indicates a "self-damping" effect, where high values in one area are counteracted by low values in nearby areas. 
+
+
 ```{r}
 1/range(eigenw(lw))
 ```
@@ -434,6 +441,15 @@ summary(sar1, Nagelkerke=TRUE)
 SEM <- errorsarlm(form_pom, data=wpom3, listw=lw, control=list(pre_eig=e))
 summary(SEM, Nagelkerke=TRUE)
 ```
+SEM model gives the same results 
+
+The variables avgsal (Average Monthly Gross Wages and Salaries) and ssusers (Social Services Users) have statistically significant positive effects on the dependent variable (Crimes).
+However, the variables density, unemp (Unemployment Rate) do not show statistically significant effects on Crimes.
+
+The negative value of λ (-1.0592) suggests the presence of negative spatial autocorrelation in the model, indicating that nearby observations tend to have dissimilar residuals.
+
+The Nagelkerke pseudo-R-squared value of 0.71077 indicates that the model explains a substantial portion of the variance in Crimes.
+The AIC value of 119.79 suggests that the errors spatial autoregressive model provides a better fit to the data compared to a simple linear regression model (AIC for lm: 127.82).
 
 ```{r}
 all.equal(coef(SEM)[c(2:6, 1)], coef(sar1), tol=2e-07)
