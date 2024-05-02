@@ -128,6 +128,9 @@ wpom1 |> merge(all, by.x = "TERYT",
 wpom2
 ```
 
+We merged the 'wpom1' spatial dataset with the dataset containing socio-economic factors, based on matching values in the "TERYT" column of 'wpom1' and the "Code" column of 'all'.
+New dataset called 'wpom2' contains the merged data.
+
 ```{r}
 wpom2 |> st_area() |>
  units::set_units("km2") -> wpom2$area_km2
