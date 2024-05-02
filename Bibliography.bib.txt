@@ -15,7 +15,7 @@
   url = {https://www.researchgate.net/publication/289121090_Crime_and_space},
 }
 
-@Article{Esther,
+@Article{A_Spatial_Analysis,
   title = {A SPATIAL ANALYSIS OF ROBBERY RATE IN THE CITY OF DETROIT USING EXPLORATORY DATA ANALYSIS APPROACH},
   author = {{Esther Akoto Amoako}},
   organization = {International Cartographic Association},
