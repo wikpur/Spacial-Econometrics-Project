@@ -152,6 +152,9 @@ library(mapview)
 mapview(wpom2, zcol="unemp")
 ```
 
+Interactive map of Pomeramia municipalities from rgugik, unemployment rate 
+after all download administrative municipality boundaries using rgugik
+
 ```{r}
 pom_gisco <- gisco_get_nuts(year="2021", resolution="01",
  spatialtype="RG", nuts_id="PL63")
@@ -275,6 +278,14 @@ Crime rates is assumed to be negatively correlated with unemployment and ssusers
 (wpom3 |> poly2nb(queen=TRUE, row.names=wpom3$TERYT,
  snap=0.00001) -> pom_queen_nb)
 ```
+Number of regions: There are 20 regions/entities in the dataset.
+Number of nonzero links: There are 78 pairwise connections between these regions. Nonzero links indicate spatial relationships where regions share a boundary or are otherwise considered neighbors.
+Percentage nonzero weights: Nonzero weights account for 19.5% of all possible spatial relationships in the dataset. This indicates the density of spatial connections among the regions.
+Average number of links: On average, each region has approximately 3.9 neighbors. This metric provides insight into the spatial connectivity and clustering patterns within the dataset.
+
+
+
+Now we want to establish whether entities without neighbors truly have no neighbors and detect disjoint subgraphs within a spatial object. This is crucial for ensuring the accuracy of spatial analysis and modeling, as certain methods may produce unreliable results if observations are "dropped out" due to lacking neighbors or if the spatial structure is fragmented.
 
 ```{r}
 geom <- st_geometry(wpom2) 
@@ -308,27 +319,36 @@ summary(model)
 coefficients(model)
 residuals(model)
 ```
+The R-squared value of 0.5225 indicates that approximately 52.25% of the variability in crime rates is explained by the independent variables in the model.
+
+Density: The coefficient for 'density' is close to zero and statistically insignificant (p-value = 0.998). This indicates that population density doesn't significantly influence crime rates in this model.
+Avgsal (Average Salary): The coefficient for 'avgsal' is positive (0.0052), but statistically insignificant (p-value = 0.181), suggesting that average salary may not be a significant predictor of crime rates.
+Unemp (Unemployment Rate): The coefficient for 'unemp' is negative (-0.0639), but statistically insignificant (p-value = 0.903), indicating that unemployment rate may not have a significant impact on crime rates.
+Ssusers (Social Security Users): The coefficient for 'ssusers' is negative (-1.191), but statistically insignificant (p-value = 0.368), suggesting that the number of social security users may not be a significant determinant of crime rates.
+
+
+
 ## TEST OF SPACIAL AUTOCORRELATION
 
 ```{r}
 
 lw <- nb2listw(pom_queen_nb, style = "W")
 
-moran_test <- moran.test(wpom3$ratecrimes, listw = lw, randomisation = TRUE, alternative = "two.sided")
+moran_test <- moran.test(wpom3$crimesrate, listw = lw, randomisation = TRUE, alternative = "two.sided")
 print(moran_test)
 
 ```
 The Moran's I test was conducted to examine whether there is spatial autocorrelation in property crimes across Poland's Pomeranian voivodeship. 
 (Spatial autocorrelation refers to the tendency of similar values to cluster together in space.)
 
-Since the p-value (0.2962) is greater than the conventional significance level of 0.05, we fail to reject the null hypothesis. This suggests that there is insufficient evidence to conclude that there is significant spatial autocorrelation in the variable crimes across the region.
+Since the p-value (0.2962) is greater than the conventional significance level of 0.05, we fail to reject the null hypothesis. This suggests that there is insufficient evidence to conclude that there is significant spatial autocorrelation in the variable crimes across the region. Therefore, there is no evidence of spatial clustering or spatial dependence in the crime rates based on the Moran's I test
 
 
 ###TEST OF RESIDUAL SPATIAL AUTOCORRELATION
 
 ```{r}
 
-lm_null <- lm(ratecrimes ~ 1, data = wpom3)
+lm_null <- lm(crimesrate ~ 1, data = wpom3)
 
 moran_test <- moran.test(residuals(lm_null), listw = lw, randomisation = FALSE, alternative = "two.sided")
 
