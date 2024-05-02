@@ -653,6 +653,14 @@ x <- (wpom3$crimesrate)
 moran.test(x, lwW)$estimate
 ```
  
+ 
+The Moran I statistic in your output is 0.058, indicating a slight positive spatial autocorrelation in your data. This means that neighboring spatial units tend to have similar values for the variable you're analyzing (in this case, Crimes). However, the expectation of Moran's I under spatial randomness is 
+−0.0526 suggesting that if there were no spatial autocorrelation, we would expect the values to be more dispersed.
+
+The variance of 
+0.0113 reflects the variability of Moran's I under spatial randomness. With a p-value of 0.2962, we do not have sufficient evidence to reject the null hypothesis of spatial randomness. In other words, the observed spatial autocorrelation may not be statistically significant at conventional significance levels.
+ 
+ 
 ```{r}
 n <- nrow(wpom3)
 M <- diag(n) - (tcrossprod(rep(1, n)))/n
