@@ -119,6 +119,7 @@ wpom1
 ```
 Merging the pom object containing the "TERYT" keys and municipality names, with pom_sf, including the "TERYT" keys and municipality boundaries. 
 
+
 ```{r}
 all <- readxl::read_excel("all_variables.xlsx")
 sapply(all, class)
@@ -127,7 +128,7 @@ wpom1 |> merge(all, by.x = "TERYT",
  by.y = "Code") -> wpom2
 wpom2
 ```
-
+Now we add socio-economic data about unemployment, social services, average gross monthly salary, population density in pomeranian voivodeship, collected from GUS.
 We merged the 'wpom1' spatial dataset with the dataset containing socio-economic factors, based on matching values in the "TERYT" column of 'wpom1' and the "Code" column of 'all'.
 
 
@@ -144,7 +145,7 @@ New dataset called 'wpom2' contains the merged data, showing information about m
 
 ### UNEMPLOYMENT RATE
 
-We assume that there is direct proportional relationship between unemployment rate and crimes against propertyt (the higher rate of unemployment, the higher amount of crimes against property).```
+We assume that there is direct proportional relationship between unemployment rate and crimes against property (the higher rate of unemployment, the higher amount of crimes against property).```
 
 ```{r}
 library(mapview)
@@ -253,7 +254,10 @@ mapsf::mf_map(wpom3, var="crimesrate", type="choro", breaks="geom",
 ```{r}
 cor(model.matrix(~ -1 + crimesrate + density + avgsal + unemp + ssusers,wpom3))
 ```
-
+The strongest correlation is between 'crimesrate' and 'avgsal' - 0.6957, suggesting a moderately positive relationship. 
+Also 'unemp' and 'ssusers' have a correlation coefficient of 0.6813, indicating a moderately positive relationship.
+'density' and 'avgsal' have a strong positive correlation coefficient of 0.8042, indicating that areas with higher population density tend to have higher average salaries.
+Crime rates is assumed to be negatively correlated with unemployment and ssusers, which is not very logical. 
 
 ```{r}
 (wpom3 |> poly2nb(queen=FALSE,
