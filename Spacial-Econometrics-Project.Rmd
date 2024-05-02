@@ -400,6 +400,18 @@ summary(SD.RStests(lm_obj, listw=lw, test="SDEM"))
 SLX_obj <- lmSLX(form_pom, data=wpom3, listw=lw)
 summary(lm.RStests(SLX_obj, listw=lw, test="all"))
 ```
+
+Rao's score (also known as Lagrange multiplier) diagnostics for spatial dependence provide insights into the presence of spatial autocorrelation in the residuals of a regression model. Here are the key findings from the diagnostics:
+
+RSerr (Residual Spatial Error): The statistic is 4.8395 with 1 degree of freedom and a p-value of 0.027815, indicating that there is evidence of spatial autocorrelation in the residuals. The significance level is denoted by a single asterisk (*), suggesting significance at the 0.05 level.
+RSlag (Lag Spatial): The statistic is 7.5599 with 1 degree of freedom and a p-value of 0.005968, indicating strong evidence of spatial autocorrelation in the residuals. The significance level is denoted by two asterisks (**), suggesting significance at the 0.01 level.
+adjRSerr (Adjusted Residual Spatial Error): The statistic is 0.059416 with 1 degree of freedom and a p-value of 0.807422, indicating no significant evidence of spatial autocorrelation in the residuals.
+adjRSlag (Adjusted Lag Spatial): The statistic is 2.7798 with 1 degree of freedom and a p-value of 0.095461, suggesting borderline significance in detecting spatial autocorrelation in the residuals.
+SARMA (Spatial Autoregressive Moving Average): The statistic is 7.6193 with 2 degrees of freedom and a p-value of 0.022156, indicating evidence of spatial autocorrelation in the residuals. The significance level is denoted by a single asterisk (*), suggesting significance at the 0.05 level.
+In summary, the diagnostics indicate the presence of spatial autocorrelation in the residuals of the regression model, particularly highlighted by the significant findings in RSerr, RSlag, and SARMA tests. This suggests that spatial regression techniques may be more appropriate to account for spatial dependence in the data.
+
+
+
 ##SIMULTANEOUS AUTOREGRESSIVE MODELS
 
 ```{r}
