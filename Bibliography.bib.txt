@@ -15,3 +15,21 @@
   url = {https://www.researchgate.net/publication/289121090_Crime_and_space},
 }
 
+@Article{Esther,
+  title = {A SPATIAL ANALYSIS OF ROBBERY RATE IN THE CITY OF DETROIT USING EXPLORATORY DATA ANALYSIS APPROACH},
+  author = {{Esther Akoto Amoako}},
+  organization = {International Cartographic Association},
+  address = {USA},
+  year = {2021},
+  url = {https://www.researchgate.net/publication/356765865_A_Spatial_Analysis_of_Robbery_Rate_in_the_City_of_Detroit_using_Exploratory_Data_Analysis_Approach},
+}
+
+@Article{Esther,
+  title = {Determinanty przestępczości w Polsce. Analiza zależności z wykorzystaniem drzew regresyjnych},
+  author = {{Kinga Kądziołka}},
+  organization = {Wydział Nauk Ekonomicznych UW},
+  address = {Warszawa},
+  year = {2016},
+  url = {https://ekonomia.wne.uw.edu.pl/ekonomia/getFile/786},
+
+
