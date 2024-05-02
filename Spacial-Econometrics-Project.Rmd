@@ -355,11 +355,12 @@ moran_test <- moran.test(residuals(lm_null), listw = lw, randomisation = FALSE, 
 print(moran_test)
 
 ```
-The Moran's I test conducted on the residuals of the linear regression model indicates no significant spatial autocorrelation (p = 0.4692). Thus, there is no evidence to suggest that neighboring regions exhibit similar crime rates beyond what would be expected by chance.
+The Moran's I test conducted on the residuals of the linear regression model indicates no significant spatial autocorrelation (p = 0.4692). Thus, there is no evidence to suggest that neighboring regions exhibit similar crime rates beyond what would be expected by chance, under the assumtion of normality 
 
 ```{r}
 lm.morantest(lm_null, listw=lw, alternative="two.sided")
 ```
+same result, no spatial autocorrelation in the residuals
 
 ```{r}
 form_pom <- crimesrate ~ density + avgsal + unemp + ssusers
