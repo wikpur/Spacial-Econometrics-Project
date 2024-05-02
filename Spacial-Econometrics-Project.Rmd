@@ -605,6 +605,8 @@ eigW <- eigenw(similar.listw(lwW))
 cat("Class:", class(eW), "min:", 1/min(eW), "max:", 1/max(eW), "\n")
 ```
 
+
+Visual representation of the log-likelihood function for different types of spatial weights matrices
 ```{r}
 oopar <- par(mfrow=c(1,2), mar=c(4,2,4,2))
 rhoB <- seq(1/min(eB), 1/max(eB), length.out=500)
@@ -638,7 +640,12 @@ var <- scale((wpom3$crimesrate), scale=FALSE)[,1]
 set.seed(1)
 aple.mc(var, lwW, nsim=999)
 ```
- 
+Bootstrap Statistics: 
+original: This represents the original estimate of the statistic computed from the original dataset. In this case, the original estimate is 0.06826293.
+bias: It indicates the bias of the bootstrap estimate compared to the original estimate. A negative bias suggests that the bootstrap estimate tends to underestimate the original statistic, while a positive bias suggests overestimation. In this case, the bias is -0.181919, indicating that the bootstrap estimate is biased downwards.
+std. error: This is the standard error of the bootstrap estimate, which measures the variability of the bootstrap estimates around the true population parameter. In this case, the standard error is 0.1897754, indicating the precision of the bootstrap estimate.
+
+
 ## Moran eigenvectors - spatial filtering
  
 ```{r}
