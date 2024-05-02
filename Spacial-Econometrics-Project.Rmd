@@ -458,6 +458,8 @@ all.equal(coef(SEM)[c(2:6, 1)], coef(sar1), tol=2e-07)
 ```{r}
 Hausman.test(SEM)
 ```
+
+
 ## Estimation of spatial autoregressive models
 
 ```{r}
@@ -490,7 +492,7 @@ abline(h=SAC$rho, v=SAC$lambda, lwd=3, col="grey")
 lines(sac_track$V2, sac_track$V4, col="brown3")
 ```
 
-### Bayesian estimation
+### Bayesian estimation - SAC model 
 
 ```{r}
 set.seed(12345)
@@ -500,6 +502,16 @@ SAC_bayes <- spBreg_sac(form_pom, data=wpom3, listw=lw, control=list(ndraw=20000
 ```{r}
 summary(SAC_bayes[, c("rho", "lambda", "sige")])
 ```
+For rho, the estimated average spatial autocorrelation coefficient is approximately -0.3475, with a standard deviation of 0.2741. This suggests a negative spatial autocorrelation relationship among the observations.
+
+Similarly, for lambda, the estimated average value is approximately -0.4301, with a standard deviation of 0.4081, indicating a negative spatial dependence in the conditional correlation structure.
+
+
+Even after considering the influence of other factors included in the model (such as unemployment rate, social services usage, etc.), spatially adjacent areas still tend to have different levels of the dependent variable (in this case, "Crimes"). In simpler terms, it implies that areas that are geographically close to each other often show variations in crime rates, regardless of the impact of other factors included in the analysis. This indicates the presence of spatial patterns or spatial autocorrelation in the distribution of crime rates across the study area.
+
+The parameter sige represents the estimated standard deviation of the error term. The average value is approximately 12.3633, with a standard deviation of 4.9891, indicating the variability of the unexplained variation in the model.
+
+The presence of spatial autocorrelation prompts further investigation into the factors contributing to spatial clustering or dispersion of the variable of interest. Exploring these factors can uncover underlying drivers and mechanisms, leading to a deeper understanding of the studied phenomenon.
 
 ```{r}
 opar <- par(mfrow=c(2, 1)) 
@@ -512,6 +524,15 @@ plot(SAC_bayes[, c("rho", "lambda", "sige")], smooth=TRUE)
 SAC <- spreg(form_pom, data=wpom3, listw=lw, model="sarar")
 c(coef(SAC)[c("lambda", "rho"),], s2=as.numeric(SAC$s2))
 ```
+
+Lambda (-0.5532035): This parameter represents the spatial autoregressive coefficient. It indicates the strength and direction of spatial dependence in the variable under study. In this case, the negative value suggests a negative spatial correlation, meaning that neighboring spatial units tend to have dissimilar values in the variable.
+Rho (-0.2670974): This parameter represents the spatial autoregressive coefficient for lagged values of the dependent variable. Similar to Lambda, it quantifies the spatial dependence, but it specifically focuses on the lagged values of the variable.
+S2 (15.9016119): This parameter represents the estimated variance of the error term in the model. It provides information about the variability in the dependent variable that is not explained by the independent variables or the spatial autoregressive component.
+Overall, these parameter estimates suggest the presence of spatial autocorrelation in the data, indicating that neighboring spatial units tend to have similar values in the dependent variable.
+
+
+
+
 
 ## Trace-style impacts
 
