@@ -117,6 +117,7 @@ any(is.na(match(wpom$TERYT, pom01$TERYT)))
 wpom |> merge(pom01, by = "TERYT") -> wpom1 
 wpom1
 ```
+Merging the pom object containing the "TERYT" keys and municipality names, with pom_sf, including the "TERYT" keys and municipality boundaries. 
 
 ```{r}
 all <- readxl::read_excel("all_variables.xlsx")
