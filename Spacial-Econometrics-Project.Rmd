@@ -129,7 +129,7 @@ wpom2
 ```
 
 We merged the 'wpom1' spatial dataset with the dataset containing socio-economic factors, based on matching values in the "TERYT" column of 'wpom1' and the "Code" column of 'all'.
-New dataset called 'wpom2' contains the merged data.
+
 
 ```{r}
 wpom2 |> st_area() |>
@@ -139,6 +139,8 @@ wpom2 |> st_drop_geometry() |>
  apply(1, function(x) x[1]/x[2]) -> wpom2$density
  wpom2
 ```
+New dataset called 'wpom2' contains the merged data, showing information about municipalities within the Pomeranian Voivodeship enriched with additional variables.
+
 
 ### UNEMPLOYMENT RATE
 
