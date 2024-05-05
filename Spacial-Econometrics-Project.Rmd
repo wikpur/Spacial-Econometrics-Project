@@ -247,7 +247,7 @@ mapview(wpom3, zcol="crimesrate")
 ```
 
 ```{r}
-plot(density(wpom3$ratecrimes))
+plot(density(wpom3$crimesrate))
 ```
 
 ```{r}
@@ -716,16 +716,6 @@ W <- as(as(similar.listw(lwW), "CsparseMatrix"), "symmetricMatrix")
 arW <- eigs(W, 2, which = "BE")
 1/rev(arW$values)
 ```
-```{r}
-@article{A_Spatial_Analysis,
-    author    = "Esther Akoto Amoako",
-    title     = "A spatial analysis of robbery rate in the city of Detroit using exploratory data analysis approach",
-    journal   = "International Cartographic Association",
-    year      = "2021",
-}
-```
-
-
 
 
 
